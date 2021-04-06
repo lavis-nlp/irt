@@ -1,0 +1,13 @@
+# notes
+jupyter
+matplotlib
+
+# dev
+ipdb
+black
+flake8
+autopep8
+ipython
+
+# self
+-e .
