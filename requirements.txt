@@ -1,8 +1,11 @@
+tqdm
 pyyaml
 networkx
+gitpython
 
 # notes
 jupyter
+tabulate
 matplotlib
 
 # dev
