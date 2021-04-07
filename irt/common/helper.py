@@ -3,6 +3,10 @@
 from irt import IRTError
 from irt.common import logging
 
+import git
+import numpy as np
+
+import random
 import pathlib
 
 from typing import Union
@@ -59,3 +63,17 @@ def path(
         log.info(message.format(path=path, path_abbrv=path_abbrv))
 
     return path
+
+
+def seed(seed: int) -> np.random.Generator:
+    log.info(f"! setting seed to {seed}")
+    random.seed(seed)
+    np.random.seed(seed=seed)
+    # torch.manual_seed(seed=seed)
+    return np.random.default_rng(seed)
+
+
+def git_hash() -> str:
+    repo = git.Repo(search_parent_directories=True)
+    # dirty = '-dirty' if repo.is_dirty else ''
+    return str(repo.head.object.hexsha)
