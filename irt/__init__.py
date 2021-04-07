@@ -17,6 +17,7 @@ class ENV:
 
     ROOT_DIR:    pathlib.Path = _root_path
     SRC_DIR:     pathlib.Path = _root_path / 'irt'
+    LIB_DIR:     pathlib.Path = _root_path / 'lib'
     CONF_DIR:    pathlib.Path = _root_path / 'conf'
     DATA_DIR:    pathlib.Path = _root_path / _DATA_DIR
     DATASET_DIR: pathlib.Path = _root_path / _DATA_DIR / 'irt'

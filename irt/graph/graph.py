@@ -6,12 +6,16 @@ graph abstraction
 
 """
 
+from irt.common import helper
 from irt.common import logging
 
+import yaml
 import networkx
 import numpy as np
 
+import gzip
 import pathlib
+from functools import partial
 
 from dataclasses import field
 from dataclasses import dataclass
@@ -108,13 +112,55 @@ class GraphImport:
 
     # --
 
-    # use |= to join two graph imports
     def join(self, other: "GraphImport") -> "GraphImport":
         ents = {**self.ents, **other.ents}
         rels = {**self.rels, **other.rels}
         triples = self.triples | other.triples
 
         self._set_all(triples, ents, rels)
+
+    def save(self, path: Union[str, pathlib.Path]):
+        path = helper.path(
+            path,
+            create=True,
+            message="saving graph import to {path_abbrv}",
+        )
+
+        enc = partial(map, str.encode)
+
+        with gzip.open(str(path / "triples.txt.gz"), mode="w") as fd:
+            fd.writelines(enc(f"{h} {t} {r}\n" for h, t, r in self.triples))
+
+        with gzip.open(str(path / "entities.txt.gz"), mode="w") as fd:
+            fd.writelines(enc(f"{e} {name}\n" for e, name in self.ents.items()))
+
+        with gzip.open(str(path / "relations.txt.gz"), mode="w") as fd:
+            fd.writelines(enc(f"{r} {name}\n" for r, name in self.rels.items()))
+
+    @classmethod
+    def load(K, path: Union[str, pathlib.Path]):
+        path = helper.path(
+            path,
+            create=True,
+            message="loading graph import from {path_abbrv}",
+        )
+
+        with gzip.open(str(path / "triples.txt.gz"), mode="r") as fd:
+            triples = set(tuple(map(int, line.split())) for line in fd)
+
+        split = partial(str.split, maxsplit=1)
+
+        def _load_dict(fd):
+            lines = (split(line.decode()) for line in fd)
+            return dict((int(i), name) for i, name in lines)
+
+        with gzip.open(str(path / "entities.txt.gz"), mode="r") as fd:
+            ents = _load_dict(fd)
+
+        with gzip.open(str(path / "relations.txt.gz"), mode="r") as fd:
+            rels = _load_dict(fd)
+
+        return K(triples=triples, ents=ents, rels=rels)
 
 
 class Graph:
@@ -393,13 +439,23 @@ class Graph:
         ----------
 
         path : Union[str, pathlib.Path]
-          File to save the graph to
+          Folder to save the graph to
 
         """
-        raise NotImplementedError
+        path = helper.path(
+            path,
+            create=True,
+            message=f"saving {self.name} to {{path_abbrv}}",
+        )
 
-    @staticmethod
-    def load(path: Union[str, pathlib.Path]) -> "Graph":
+        kwargs = dict(name=self.name)
+        with (path / "config.yml").open(mode="w") as fd:
+            yaml.dump(kwargs, fd)
+
+        self.source.save(path)
+
+    @classmethod
+    def load(K, path: Union[str, pathlib.Path]) -> "Graph":
         """
 
         Load graph from file
@@ -411,7 +467,17 @@ class Graph:
           File to load graph from
 
         """
-        raise NotImplementedError
+        path = helper.path(
+            path,
+            exists=True,
+            message="loading graph from {path_abbrv}",
+        )
+
+        with (path / "config.yml").open(mode="r") as fd:
+            kwargs = yaml.load(fd)
+
+        source = GraphImport.load(path)
+        return K(source=source, **kwargs)
 
     #
     # ---| SUGAR
@@ -422,10 +488,7 @@ class Graph:
 
         src = self.source
 
-        rows = [
-            (h, src.ents[h], t, src.ents[t], r, src.rels[r])
-            for h, t, r in triples
-        ]
+        rows = [(h, src.ents[h], t, src.ents[t], r, src.rels[r]) for h, t, r in triples]
 
         return tabulate(rows, headers=("", "head", "", "tail", "", "relation"))
 
