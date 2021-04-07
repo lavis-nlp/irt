@@ -27,7 +27,7 @@ from typing import NewType
 from typing import Iterable
 
 
-log = logging.get("graphs.graph")
+log = logging.get("graph.graph")
 Triple = NewType("Triple", tuple[int, int, int])
 
 

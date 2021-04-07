@@ -12,7 +12,7 @@ from typing import Union
 from typing import Generator
 
 
-log = logging.get("graphs.loader")
+log = logging.get("graph.loader")
 
 
 # --- | CODEX IMPORTER
