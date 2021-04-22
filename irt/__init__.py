@@ -21,6 +21,7 @@ class ENV:
     CONF_DIR:    pathlib.Path = _root_path / 'conf'
     DATA_DIR:    pathlib.Path = _root_path / _DATA_DIR
     DATASET_DIR: pathlib.Path = _root_path / _DATA_DIR / 'irt'
+    SRC_DIR:     pathlib.Path = _root_path / _DATA_DIR / 'src'
 # fmt: on
 
 
