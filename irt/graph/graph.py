@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+
 """
 
 graph abstraction
@@ -152,7 +153,7 @@ class GraphImport:
 
         def _load_dict(fd):
             lines = (split(line.decode()) for line in fd)
-            return dict((int(i), name) for i, name in lines)
+            return dict((int(i), name.strip()) for i, name in lines)
 
         with gzip.open(str(path / "entities.txt.gz"), mode="r") as fd:
             ents = _load_dict(fd)
