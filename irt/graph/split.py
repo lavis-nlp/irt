@@ -104,7 +104,7 @@ class Config:
         )
 
         with path.open(mode="r") as fd:
-            self = K(**yaml.load(fd))
+            self = K(**yaml.load(fd, Loader=yaml.FullLoader))
 
         return dataclasses.replace(
             self, excludelist=set(self.excludelist), includelist=set(self.includelist)

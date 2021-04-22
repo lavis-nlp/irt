@@ -475,7 +475,7 @@ class Graph:
         )
 
         with (path / "config.yml").open(mode="r") as fd:
-            kwargs = yaml.load(fd)
+            kwargs = yaml.load(fd, Loader=yaml.FullLoader)
 
         source = GraphImport.load(path)
         return K(source=source, **kwargs)
