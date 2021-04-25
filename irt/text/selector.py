@@ -6,7 +6,6 @@ assigns text to entities
 
 """
 
-import irt
 from irt.text import loader
 from irt.graph import graph
 from irt.common import helper
@@ -21,7 +20,6 @@ import contextlib
 from functools import partial
 from datetime import datetime
 from dataclasses import dataclass
-from collections import defaultdict
 
 import yaml
 from tqdm import tqdm as _tqdm
@@ -103,7 +101,7 @@ class Selector:
 
         # list(set(x)) is not possible because of the
         # unpredictable python hash seeds
-        acc, seen = defaultdict(list), set()
+        tuples, seen = [], set()
 
         for blob, mention in zip(result.blobs, result.mentions):
 
@@ -115,35 +113,31 @@ class Selector:
                     continue
 
                 seen.add(sentence)
-                acc[mention].append(sentence)
+                tuples.append((mention, sentence))
 
         if self.shuffle:
-            for sentences in acc.values():
-                random.shuffle(sentences)
+            random.shuffle(tuples)
 
         # select n sentences each
-        return {
-            mention: sentences[: self.sentences]
-            for mention, sentences in acc.items()
-            if sentences
-        }
+        return tuples[: self.sentences]
 
-    def transform_sentences(self, mention: str, sentences: list[str]):
+    def transform_sentence(self, mention: str, sentence: str):
 
-        sentences = [" ".join(sentence.strip().split()) for sentence in sentences]
+        sentence = " ".join(sentence.strip().split())
 
-        ret = {Mode.CLEAN: sentences}
+        ret = {Mode.CLEAN: sentence}
 
         if Mode.MASKED in self.fd_sentences:
-            ret[Mode.MASKED] = [
-                sentence.replace(mention, MASK_TOKEN) for sentence in sentences
-            ]
+            ret[Mode.MASKED] = (
+                sentence.replace(mention, MASK_TOKEN) if mention else sentence
+            )
 
         if Mode.MARKED in self.fd_sentences:
-            ret[Mode.MARKED] = [
+            ret[Mode.MARKED] = (
                 sentence.replace(mention, MARKED.format(mention=mention))
-                for sentence in sentences
-            ]
+                if mention
+                else sentence
+            )
 
         return ret
 
@@ -158,21 +152,20 @@ class Selector:
             fd.write(f"# Format: <ID>{SEP}<NAME>{SEP}<SENTENCE>\n".encode())
 
     def yield_lines(self, result: loader.Result):
-
-        # maps result objects to mention -> [sentence1, sentence2, ...]
-        for mention, sentences in self.transform_result(result=result).items():
-
-            # maps sentences to mode -> [f(sentence1), f(sentence2), ...]
-            for mode, sentences in self.transform_sentences(
-                mention=mention, sentences=sentences
+        for mention, sentence in self.transform_result(result=result):
+            for mode, sentence in self.transform_sentence(
+                mention=mention, sentence=sentence
             ).items():
 
-                for sentence in sentences:
-                    yield mode, mention, sentence
+                yield mode, mention, sentence
 
     def write_result(self, e: int, result: loader.Result):
         for mode, mention, sentence in self.yield_lines(result=result):
             fd = self.fd_sentences[mode]
+
+            assert SEP not in mention
+            assert SEP not in sentence
+
             self.write(fd, f"{e}{SEP}{mention}{SEP}{sentence}")
 
     def write_text(self):
