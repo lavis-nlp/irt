@@ -3,7 +3,6 @@
 
 import pathlib
 
-
 __version__ = '1.0'
 
 
@@ -28,3 +27,10 @@ class ENV:
 class IRTError(Exception):
     def __init__(self, msg: str):
         super().__init__(msg)
+
+
+# -- register classes for convient access
+
+from irt.data import dataset  # noqa: E402
+
+Dataset = dataset.Dataset
