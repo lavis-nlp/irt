@@ -14,7 +14,6 @@ import yaml
 import networkx
 import numpy as np
 
-import gzip
 import pathlib
 from functools import partial
 
@@ -127,16 +126,14 @@ class GraphImport:
             message="saving graph import to {path_abbrv}",
         )
 
-        enc = partial(map, str.encode)
+        with (path / "triples.txt").open(mode="w") as fd:
+            fd.writelines(f"{h} {t} {r}\n" for h, t, r in self.triples)
 
-        with gzip.open(str(path / "triples.txt.gz"), mode="w") as fd:
-            fd.writelines(enc(f"{h} {t} {r}\n" for h, t, r in self.triples))
+        with (path / "entities.txt").open(mode="w") as fd:
+            fd.writelines(f"{e} {name}\n" for e, name in self.ents.items())
 
-        with gzip.open(str(path / "entities.txt.gz"), mode="w") as fd:
-            fd.writelines(enc(f"{e} {name}\n" for e, name in self.ents.items()))
-
-        with gzip.open(str(path / "relations.txt.gz"), mode="w") as fd:
-            fd.writelines(enc(f"{r} {name}\n" for r, name in self.rels.items()))
+        with (path / "relations.txt").open(mode="w") as fd:
+            fd.writelines(f"{r} {name}\n" for r, name in self.rels.items())
 
     @classmethod
     def load(K, path: Union[str, pathlib.Path]):
@@ -146,19 +143,19 @@ class GraphImport:
             message="loading graph import from {path_abbrv}",
         )
 
-        with gzip.open(str(path / "triples.txt.gz"), mode="r") as fd:
+        with (path / "triples.txt").open(mode="r") as fd:
             triples = set(tuple(map(int, line.split())) for line in fd)
 
         split = partial(str.split, maxsplit=1)
 
         def _load_dict(fd):
-            lines = (split(line.decode()) for line in fd)
+            lines = (split(line) for line in fd)
             return dict((int(i), name.strip()) for i, name in lines)
 
-        with gzip.open(str(path / "entities.txt.gz"), mode="r") as fd:
+        with (path / "entities.txt").open(mode="r") as fd:
             ents = _load_dict(fd)
 
-        with gzip.open(str(path / "relations.txt.gz"), mode="r") as fd:
+        with (path / "relations.txt").open(mode="r") as fd:
             rels = _load_dict(fd)
 
         return K(triples=triples, ents=ents, rels=rels)

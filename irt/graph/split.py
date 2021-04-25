@@ -15,7 +15,6 @@ import random
 import pathlib
 import textwrap
 
-import gzip
 import dataclasses
 from datetime import datetime
 from functools import lru_cache
@@ -493,7 +492,7 @@ class Splitter:
         concepts = set.union(*(rel.concepts for rel in relations))
         log.info(f"{len(concepts)=}")
 
-        candidates = list(set(self.g.source.ents) - concepts)
+        candidates = sorted(set(self.g.source.ents) - concepts)
         random.shuffle(candidates)
 
         _p = int(self.cfg.ow_split * 100)
@@ -502,8 +501,8 @@ class Splitter:
         # there are two thresholds:
         # 0 < t1 < t2 < len(triples) = n
         # where:
-        #  0-t1:   ow valid
-        #  t1-t2:  ow test
+        #  0-t1:   ow test
+        #  t1-t2:  ow valid
         #  t2-n:   cw
 
         n = len(self.g.source.triples)
@@ -562,15 +561,15 @@ class Splitter:
         ow_test: set[Triple],
     ):
         def _write(name, triples):
-            with gzip.open(str(self.path / name), mode="w") as fd:
-                fd.writelines(f"{h} {t} {r}\n".encode() for h, t, r in triples)
+            with (self.path / name).open(mode="w") as fd:
+                fd.writelines(f"{h} {t} {r}\n" for h, t, r in triples)
 
-        _write("cw.txt.gz", cw)
-        _write("ow_valid.txt.gz", ow_valid)
-        _write("ow_test.txt.gz", ow_test)
+        _write("closed_world.txt", cw)
+        _write("open_world-valid.txt", ow_valid)
+        _write("open_world-test.txt", ow_test)
 
-        with gzip.open(str(self.path / "concepts.txt.gz"), mode="w") as fd:
-            fd.writelines(f"{e} {self.g.source.ents[e]}\n".encode() for e in concepts)
+        with (self.path / "concepts.txt").open(mode="w") as fd:
+            fd.writelines(f"{e} {self.g.source.ents[e]}\n" for e in concepts)
 
         self.cfg.save(self.path / "config.yml")
 
