@@ -1,17 +1,20 @@
 # -*- coding: utf-8 -*-
 
 
+from irt import text
 from irt.graph import graph
 from irt.graph import split
 from irt.common import helper
 from irt.common import logging
 
+import gzip
 import pathlib
 import textwrap
 
 from functools import lru_cache
 from dataclasses import dataclass
 from itertools import combinations
+from collections import defaultdict
 
 from typing import Union
 
@@ -147,7 +150,7 @@ class Split:
         Run some self diagnosis
 
         """
-        log.info(f"! running self-check for dataset split")
+        log.info("! running self-check for dataset split")
 
         # no triples must be shared between splits
 
@@ -195,11 +198,6 @@ class Split:
         else:
             log.warning("entities in ow test leaked!")
 
-        # no concept entity must appear as open-world entity
-        assert not len(
-            self.concepts & (self.open_world_valid.owe | self.open_world_test.owe)
-        ), "concept entities leaked"
-
         # each triple of the open world splits must contain at least
         # one open world entity
         for part in (self.open_world_valid, self.open_world_test):
@@ -220,6 +218,13 @@ class Split:
                 )
 
 
+@dataclass(frozen=True)
+class Text:
+
+    mention: str
+    context: str
+
+
 class Dataset:
     """
 
@@ -231,6 +236,17 @@ class Dataset:
 
     graph: graph.Graph
     split: Split
+    text: dict[int, set[Text]]
+
+    # ---
+
+    @property
+    def id2ent(self) -> dict[int, str]:
+        return self.graph.source.ents
+
+    @property
+    def id2rel(self) -> dict[int, str]:
+        return self.graph.source.rels
 
     # ---
 
@@ -239,6 +255,8 @@ class Dataset:
         self.graph = graph.Graph.load(path=path)
 
     def _init_split(self, path: pathlib.Path) -> None:
+        log.info("loading split data")
+
         path = helper.path(path / "split", exists=True)
         cfg = split.Config.load(path / "config.yml")
 
@@ -267,10 +285,36 @@ class Dataset:
 
         self.split = Split(cfg=cfg, concepts=concepts, **parts)
 
-    def __init__(self, path: Union[str, pathlib.Path], check: bool = False):
-        self._check = check
+    def _init_text(self, path, mode: text.Mode):
+        log.info(f"loading text data ({mode.value=})")
 
+        path = helper.path(path / "text", exists=True)
+        self.text = defaultdict(set)
+
+        fpath = path / text.Mode.filename(mode)
+        with gzip.open(str(fpath), mode="rb") as fd:
+            header = next(fd).decode().strip()
+            assert header.startswith("#")
+
+            splits = (
+                # strip each value of the split lines
+                map(str.strip, line.decode().split(text.SEP, maxsplit=2))
+                for line in fd
+                if line.strip()
+            )
+
+            for e, mention, context in splits:
+                self.text[int(e)].add(Text(mention=mention, context=context))
+
+    def __init__(
+        self,
+        path: Union[str, pathlib.Path],
+        mode: text.Mode = text.Mode.CLEAN,
+        check: bool = False,
+    ):
+        self._check = check
         path = helper.path(path, exists=True)
 
         self._init_graph(path)
         self._init_split(path)
+        self._init_text(path, mode=mode)
