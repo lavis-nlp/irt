@@ -6,12 +6,12 @@ assigns text to entities
 
 """
 
+from irt import text
 from irt.text import loader
 from irt.graph import graph
 from irt.common import helper
 from irt.common import logging
 
-import enum
 import gzip
 import random
 import pathlib
@@ -32,31 +32,19 @@ log = logging.get("text.selector")
 tqdm = partial(_tqdm, ncols=80)
 
 
-SEP = "|"
-MASK_TOKEN = "[MASK]"
-TOK_MENTION_START = "[MENTION_START]"
-TOK_MENTION_END = "[MENTION_END]"
-
-
 # this matches masked sequences of the upstream sqlite context dbs
-MARKED = TOK_MENTION_START + " {mention} " + TOK_MENTION_END
+MARKED = text.TOK_MENTION_START + " {mention} " + text.TOK_MENTION_END
 
 
-def _filter(sentence, mention):
+def _filter(context, mention):
     return all(
         (
-            # at least 50 chars per sentence
-            len(sentence) > 50,
+            # at least 50 chars per context
+            len(context) > 50,
             # no File: prefixed blobs
-            not sentence.startswith("File:"),
+            not context.startswith("File:"),
         )
     )
-
-
-class Mode(enum.Enum):
-    CLEAN = "clean"
-    MARKED = "marked"
-    MASKED = "masked"
 
 
 # ---
@@ -67,13 +55,13 @@ class Selector:
 
     g: graph.Graph
 
-    sentences: list[int]
+    contexts: list[int]
     shuffle: bool
 
     select: loader.Loader
 
     fd_nocontext: IO[bytes]
-    fd_sentences: dict[str, IO[bytes]]
+    fd_contexts: dict[str, IO[bytes]]
 
     # --
 
@@ -91,7 +79,7 @@ class Selector:
 
         self.write(
             self.fd_nocontext,
-            f"{e}{SEP}{name}{SEP}{count}",
+            f"{e}{text.SEP}{name}{text.SEP}{count}",
         )
 
         msg = f"! no context for {e}: {name} ({count} triples)"
@@ -108,35 +96,35 @@ class Selector:
             # filter BEFORE mapping
             gen = (s for s in blob.split("\n") if _filter(s, mention))
 
-            for sentence in gen:
-                if sentence in seen:
+            for context in gen:
+                if context in seen:
                     continue
 
-                seen.add(sentence)
-                tuples.append((mention, sentence))
+                seen.add(context)
+                tuples.append((mention, context))
 
         if self.shuffle:
             random.shuffle(tuples)
 
-        # select n sentences each
-        return tuples[: self.sentences]
+        # select n contexts each
+        return tuples[: self.contexts]
 
-    def transform_sentence(self, mention: str, sentence: str):
+    def transform_context(self, mention: str, context: str):
 
-        sentence = " ".join(sentence.strip().split())
+        context = " ".join(context.strip().split())
 
-        ret = {Mode.CLEAN: sentence}
+        ret = {text.Mode.CLEAN: context}
 
-        if Mode.MASKED in self.fd_sentences:
-            ret[Mode.MASKED] = (
-                sentence.replace(mention, MASK_TOKEN) if mention else sentence
+        if text.Mode.MASKED in self.fd_contexts:
+            ret[text.Mode.MASKED] = (
+                context.replace(mention, text.MASK_TOKEN) if mention else context
             )
 
-        if Mode.MARKED in self.fd_sentences:
-            ret[Mode.MARKED] = (
-                sentence.replace(mention, MARKED.format(mention=mention))
+        if text.Mode.MARKED in self.fd_contexts:
+            ret[text.Mode.MARKED] = (
+                context.replace(mention, MARKED.format(mention=mention))
                 if mention
-                else sentence
+                else context
             )
 
         return ret
@@ -146,27 +134,29 @@ class Selector:
         fd.write((s + "\n").encode())
 
     def write_header(self):
-        self.fd_nocontext.write(f"# Format: <ID>{SEP}<NAME>{SEP}<TRIPLES>\n".encode())
+        self.fd_nocontext.write(
+            f"# Format: <ID>{text.SEP}<NAME>{text.SEP}<TRIPLES>\n".encode()
+        )
 
-        for fd in self.fd_sentences.values():
-            fd.write(f"# Format: <ID>{SEP}<NAME>{SEP}<SENTENCE>\n".encode())
+        for fd in self.fd_contexts.values():
+            fd.write(f"# Format: <ID>{text.SEP}<NAME>{text.SEP}<CONTEXT>\n".encode())
 
     def yield_lines(self, result: loader.Result):
-        for mention, sentence in self.transform_result(result=result):
-            for mode, sentence in self.transform_sentence(
-                mention=mention, sentence=sentence
+        for mention, context in self.transform_result(result=result):
+            for mode, context in self.transform_context(
+                mention=mention, context=context
             ).items():
 
-                yield mode, mention, sentence
+                yield mode, mention, context
 
     def write_result(self, e: int, result: loader.Result):
-        for mode, mention, sentence in self.yield_lines(result=result):
-            fd = self.fd_sentences[mode]
+        for mode, mention, context in self.yield_lines(result=result):
+            fd = self.fd_contexts[mode]
 
-            assert SEP not in mention
-            assert SEP not in sentence
+            assert text.SEP not in mention
+            assert text.SEP not in context
 
-            self.write(fd, f"{e}{SEP}{mention}{SEP}{sentence}")
+            self.write(fd, f"{e}{text.SEP}{mention}{text.SEP}{context}")
 
     def write_text(self):
         self.write_header()
@@ -196,7 +186,7 @@ def create(
     loader: loader.Loader,
     path: Union[str, pathlib.Path],
     seed: int,
-    sentences: int = None,
+    contexts: int = None,
     shuffle: bool = True,
     mask: bool = False,
     mark: bool = False,
@@ -210,7 +200,7 @@ def create(
         yaml.dump(
             dict(
                 seed=seed,
-                sentences=sentences,
+                contexts=contexts,
                 shuffle=shuffle,
                 mask=mask,
                 mark=mark,
@@ -220,23 +210,26 @@ def create(
             fd,
         )
 
-    def gopen(f_name: str):
-        return gzip.open(str(text_dir / f_name), mode="wb")
+    def _gz_open(fname: str):
+        return gzip.open(str(text_dir / fname), mode="wb")
 
-    fd_sentences = {Mode.CLEAN: gopen("sentences.clean.txt.gz")}
+    def _ctx_open(mode: text.Mode):
+        return _gz_open(fname=text.Mode.filename(mode))
+
+    fd_contexts = {text.Mode.CLEAN: _ctx_open(text.Mode.CLEAN)}
 
     if mask:
-        fd_sentences[Mode.MASKED] = gopen("sentences.masked.txt.gz")
+        fd_contexts[text.Mode.MASKED] = _ctx_open(text.Mode.MASKED)
     if mark:
-        fd_sentences[Mode.MARKED] = gopen("sentences.marked.txt.gz")
+        fd_contexts[text.Mode.MARKED] = _ctx_open(text.Mode.MARKED)
 
     with contextlib.ExitStack() as stack:
 
         Selector(
             g=g,
-            sentences=sentences,
+            contexts=contexts,
             shuffle=shuffle,
             select=stack.enter_context(loader),
-            fd_sentences={k: stack.enter_context(v) for k, v in fd_sentences.items()},
-            fd_nocontext=stack.enter_context(gopen("nocontext.txt.gz")),
+            fd_contexts={k: stack.enter_context(v) for k, v in fd_contexts.items()},
+            fd_nocontext=stack.enter_context(_gz_open("nocontext.txt.gz")),
         ).write_text()

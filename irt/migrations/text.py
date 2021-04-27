@@ -52,8 +52,8 @@ class Legacy(text_loader.Loader):
             fd.readline()  # consume head comment
 
             for line in map(bytes.decode, fd.readlines()):
-                e_str, label, sentence = map(str.strip, line.split(SEP, maxsplit=2))
-                yield int(e_str), label, sentence
+                e_str, label, context = map(str.strip, line.split(SEP, maxsplit=2))
+                yield int(e_str), label, context
 
     def _read_mult(self, path, *fnames):
         for fname in fnames:
@@ -68,9 +68,9 @@ class Legacy(text_loader.Loader):
         # the marked dataset
 
         files = (
-            "cw.train-sentences.txt.gz",
-            "ow.valid-sentences.txt.gz",
-            "ow.test-sentences.txt.gz",
+            "cw.train-contexts.txt.gz",
+            "ow.valid-contexts.txt.gz",
+            "ow.test-contexts.txt.gz",
         )
 
         e2mention = defaultdict(deque)
@@ -79,8 +79,8 @@ class Legacy(text_loader.Loader):
         if marked_path.exists():
             count = 0
             rex = re.compile(r"\[MENTION_START\](.+?)\[MENTION_END\]")
-            for e, label, sentence in self._read_mult(marked_path, *files):
-                match = re.search(rex, sentence)
+            for e, label, context in self._read_mult(marked_path, *files):
+                match = re.search(rex, context)
 
                 if match:
                     mention = match[1].strip()
@@ -90,13 +90,13 @@ class Legacy(text_loader.Loader):
 
                 e2mention[e].append(mention)
 
-            log.info(f"there are {count} sentences without explicit mentions")
+            log.info(f"there are {count} contexts without explicit mentions")
 
         e2result = defaultdict(list)
         clean_path = self.path / "bert-base-cased.30.768.clean"
-        for e, label, sentence in self._read_mult(clean_path, *files):
+        for e, label, context in self._read_mult(clean_path, *files):
             mention = e2mention[e].popleft() if e in e2mention else label
-            e2result[e].append((mention, sentence))
+            e2result[e].append((mention, context))
 
         return Legacy.Selector(e2result=e2result)
 
@@ -112,7 +112,7 @@ if __name__ == "__main__":
             irt.ENV.SRC_DIR / "legacy/cde.m_8051991_27/contexts-v7-2020-12-31.db"
         ),
         path=irt.ENV.DATASET_DIR / "irt-cde",
-        sentences=30,
+        contexts=30,
         seed=8051991,
         shuffle=False,
         mark=True,

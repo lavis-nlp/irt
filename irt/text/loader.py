@@ -264,11 +264,11 @@ class CoDEx(Loader):
                 log.error(f"did not find {e=}: {self.ent2wiki[e]}")
                 return None
 
-            sentences = "\n".join(self.tokenize(raw))
+            contexts = "\n".join(self.tokenize(raw))
 
             return Result(
                 mentions=(name,),
-                blobs=(sentences,),
+                blobs=(contexts,),
             )
 
     # ---
