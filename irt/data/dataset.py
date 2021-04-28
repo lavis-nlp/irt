@@ -10,6 +10,7 @@ from irt.common import logging
 import gzip
 import pathlib
 import textwrap
+import statistics
 
 from functools import lru_cache
 from dataclasses import dataclass
@@ -104,7 +105,7 @@ class Split:
 
     @property
     def description(self) -> str:
-        s = f"IRT SPLIT\n{len(self.concepts)} retained concepts\n\n{self.cfg}\n"
+        s = f"IRT SPLIT\n{len(self.concepts)} retained concepts\n\n{self.cfg}"
 
         # functools.partial not applicable :(
         def _indent(s):
@@ -214,10 +215,51 @@ class Split:
 
 
 @dataclass(frozen=True)
-class Text:
+class TextSample:
 
     mention: str
     context: str
+
+
+class Text(defaultdict):
+    def __init__(self):
+        super().__init__(set)
+
+    def __str__(self) -> str:
+        fmt = "irt text: ~{mean_contexts:.2f} text contexts per entity"
+        return fmt.format(**self.stats)
+
+    @property
+    def stats(self) -> dict[str, float]:
+        contexts, mentions = zip(
+            *[
+                (len(samples), len({sample.mention for sample in samples}))
+                for samples in self.values()
+            ]
+        )
+
+        return dict(
+            mean_contexts=statistics.mean(contexts),
+            median_contexts=statistics.median(contexts),
+            mean_mentions=statistics.mean(mentions),
+            median_mentions=statistics.median(mentions),
+        )
+
+    # fmt: off
+    @property
+    def description(self):
+        s = "IRT Text (per entity)\n"
+
+        stats = (
+            "mean contexts: {mean_contexts:.2f}\n"
+            "median contexts: {median_contexts:.2f}\n"
+            "mean mentions: {mean_mentions:.2f}\n"
+            "median mentions: {median_mentions:.2f}\n"
+        ).format(**self.stats)
+
+        s += textwrap.indent(stats, "  ")
+        return s
+    # fmt: on
 
 
 class Dataset:
@@ -231,7 +273,7 @@ class Dataset:
 
     graph: graph.Graph
     split: Split
-    text: dict[int, set[Text]]
+    text: Text  # i.e. dict[int, set[TextSample]]
 
     # ---
 
@@ -250,12 +292,19 @@ class Dataset:
     # ---
 
     def __str__(self):
-        return f"IRT dataset:\n{self.graph}\n{self.split}"
+        return f"IRT dataset:\n{self.graph}\n{self.split}\n{self.text}"
 
+    # fmt: off
     @property
     @lru_cache
     def description(self) -> str:
-        return f"IRT DATASET\n\n{self.graph.description}\n{self.split.description}"
+        return (
+            f"IRT DATASET\n\n"
+            f"{self.graph.description}\n"
+            f"{self.split.description}\n"
+            f"{self.text.description}"
+        )
+    # fmt: on
 
     # ---
     # initialization
@@ -299,7 +348,7 @@ class Dataset:
         log.info(f"loading text data ({mode.value=})")
 
         path = helper.path(path / "text", exists=True)
-        self.text = defaultdict(set)
+        self.text = Text()
 
         fpath = path / text.Mode.filename(mode)
         with gzip.open(str(fpath), mode="rb") as fd:
@@ -314,7 +363,7 @@ class Dataset:
             )
 
             for e, mention, context in splits:
-                self.text[int(e)].add(Text(mention=mention, context=context))
+                self.text[int(e)].add(TextSample(mention=mention, context=context))
 
     def __init__(
         self,
