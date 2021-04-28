@@ -3,7 +3,7 @@
 
 from irt import text
 from irt.graph import graph
-from irt.graph import split
+from irt.graph import split as graph_split
 from irt.common import helper
 from irt.common import logging
 
@@ -39,7 +39,7 @@ class Part:
 
     @property
     @lru_cache
-    def g(self) -> graph.Graph:
+    def graph(self) -> graph.Graph:
         return graph.Graph(source=graph.GraphImport(triples=self.triples))
 
     @property
@@ -93,7 +93,7 @@ class Split:
 
     """
 
-    cfg: split.Config
+    cfg: graph_split.Config
     concepts: set[int]
 
     closed_world: Part
@@ -104,12 +104,7 @@ class Split:
 
     @property
     def description(self) -> str:
-        s = (
-            "IRT SPLIT\n"
-            f"-----------------\n"
-            f"\n{len(self.concepts)} retained concepts\n\n"
-            f"{self.cfg}\n"
-        )
+        s = f"IRT SPLIT\n{len(self.concepts)} retained concepts\n\n{self.cfg}\n"
 
         # functools.partial not applicable :(
         def _indent(s):
@@ -124,7 +119,7 @@ class Split:
     # ---
 
     def __str__(self) -> str:
-        return f"split [{self.name}]: " + (
+        return "IRT split: " + (
             " | ".join(
                 f"{part}"
                 for part in (
@@ -241,6 +236,10 @@ class Dataset:
     # ---
 
     @property
+    def config(self) -> graph_split.Config:
+        return self.split.cfg
+
+    @property
     def id2ent(self) -> dict[int, str]:
         return self.graph.source.ents
 
@@ -250,6 +249,17 @@ class Dataset:
 
     # ---
 
+    def __str__(self):
+        return f"IRT dataset:\n{self.graph}\n{self.split}"
+
+    @property
+    @lru_cache
+    def description(self) -> str:
+        return f"IRT DATASET\n\n{self.graph.description}\n{self.split.description}"
+
+    # ---
+    # initialization
+
     def _init_graph(self, path: pathlib.Path) -> None:
         path = helper.path(path / "graph", exists=True)
         self.graph = graph.Graph.load(path=path)
@@ -258,7 +268,7 @@ class Dataset:
         log.info("loading split data")
 
         path = helper.path(path / "split", exists=True)
-        cfg = split.Config.load(path / "config.yml")
+        cfg = graph_split.Config.load(path / "config.yml")
 
         with (path / "concepts.txt").open(mode="r") as fd:
             # we are only interested in the entity ids

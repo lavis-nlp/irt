@@ -218,7 +218,7 @@ class Graph:
     @property
     def description(self) -> str:
         s = (
-            f"irt graph: {self.name}\n"
+            f"IRT GRAPH: {self.name}\n"
             f"  nodes: {self.nx.number_of_nodes()}\n"
             f"  edges: {self.nx.number_of_edges()}"
             f" ({len(self.source.rels)} types)\n"
@@ -240,7 +240,7 @@ class Graph:
     # --
 
     def __str__(self) -> str:
-        return f"irt graph: [{self.name}] ({len(self.source.ents)} entities)"
+        return f"IRT graph: [{self.name}] ({len(self.source.ents)} entities)"
 
     def __init__(
         self,
