@@ -32,5 +32,13 @@ class IRTError(Exception):
 # -- register classes for convient access
 
 from irt.data import dataset  # noqa: E402
+from irt.data import pykeen  # noqa: E402
 
+# Vanilla Python
 Dataset = dataset.Dataset
+
+# Knowledge Graph Completion with PyKeen
+KeenClosedWorld = pykeen.KeenClosedWorld
+KeenOpenWorld = pykeen.KeenOpenWorld
+
+# Mapper Training with PyTorch Lightning
