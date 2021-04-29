@@ -8,12 +8,12 @@ migrate legacy ryn text datasets to the new irt format
 
 import irt
 from irt.common import helper
-from irt.common import logging
 from irt.text import selector
 from irt.text import loader as text_loader
 
 import re
 import gzip
+import logging
 import pathlib
 from collections import deque
 from collections import defaultdict
@@ -21,7 +21,7 @@ from collections import defaultdict
 from typing import Optional
 
 
-log = logging.get("migrate.text")
+log = logging.getLogger(__name__)
 
 
 SEP = "|"

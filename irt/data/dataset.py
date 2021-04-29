@@ -5,10 +5,10 @@ from irt import text
 from irt.graph import graph
 from irt.graph import split as graph_split
 from irt.common import helper
-from irt.common import logging
 
 import gzip
 import pathlib
+import logging
 import textwrap
 import statistics
 
@@ -17,6 +17,9 @@ from dataclasses import dataclass
 from itertools import combinations
 from collections import defaultdict
 
+from typing import Set
+from typing import Dict
+from typing import Tuple
 from typing import Union
 
 
@@ -28,15 +31,15 @@ def _ents_from_triples(triples):
     return set(hs) | set(ts)
 
 
-log = logging.get("data.dataset")
+log = logging.getLogger(__name__)
 
 
 @dataclass(eq=False)  # id based hashing
 class Part:
 
     name: str
-    owe: set[int]  # open world entities
-    triples: set[tuple[int]]
+    owe: Set[int]  # open world entities
+    triples: Set[Tuple[int]]
 
     @property
     @lru_cache
@@ -50,7 +53,7 @@ class Part:
 
     @property
     @lru_cache
-    def heads(self) -> set[int]:
+    def heads(self) -> Set[int]:
         if not self.triples:
             return set()
 
@@ -58,7 +61,7 @@ class Part:
 
     @property
     @lru_cache
-    def tails(self) -> set[int]:
+    def tails(self) -> Set[int]:
         if not self.triples:
             return set()
 
@@ -95,7 +98,7 @@ class Split:
     """
 
     cfg: graph_split.Config
-    concepts: set[int]
+    concepts: Set[int]
 
     closed_world: Part
     open_world_valid: Part
@@ -230,7 +233,7 @@ class Text(defaultdict):
         return fmt.format(**self.stats)
 
     @property
-    def stats(self) -> dict[str, float]:
+    def stats(self) -> Dict[str, float]:
         contexts, mentions = zip(
             *[
                 (len(samples), len({sample.mention for sample in samples}))
@@ -273,20 +276,24 @@ class Dataset:
 
     graph: graph.Graph
     split: Split
-    text: Text  # i.e. dict[int, set[TextSample]]
+    text: Text  # i.e. Dict[int, set[TextSample]]
 
     # ---
+
+    @property
+    def name(self) -> str:
+        return self.graph.name
 
     @property
     def config(self) -> graph_split.Config:
         return self.split.cfg
 
     @property
-    def id2ent(self) -> dict[int, str]:
+    def id2ent(self) -> Dict[int, str]:
         return self.graph.source.ents
 
     @property
-    def id2rel(self) -> dict[int, str]:
+    def id2rel(self) -> Dict[int, str]:
         return self.graph.source.rels
 
     # ---

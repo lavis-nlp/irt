@@ -8,13 +8,13 @@ graph abstraction
 """
 
 from irt.common import helper
-from irt.common import logging
 
 import yaml
 import networkx
 import numpy as np
 
 import pathlib
+import logging
 from functools import partial
 
 from dataclasses import field
@@ -22,13 +22,16 @@ from dataclasses import dataclass
 from dataclasses import FrozenInstanceError
 from collections import defaultdict
 
+from typing import Set
+from typing import Dict
+from typing import Tuple
 from typing import Union
 from typing import NewType
 from typing import Iterable
 
 
-log = logging.get("graph.graph")
-Triple = NewType("Triple", tuple[int, int, int])
+log = logging.getLogger(__name__)
+Triple = NewType("Triple", Tuple[int, int, int])
 
 
 # ----------| DATA
@@ -80,10 +83,10 @@ class GraphImport:
     """
 
     # (head, tail, relation)
-    triples: set[Triple]
+    triples: Set[Triple]
 
-    rels: dict[int, str] = field(default_factory=dict)
-    ents: dict[int, str] = field(default_factory=dict)
+    rels: Dict[int, str] = field(default_factory=dict)
+    ents: Dict[int, str] = field(default_factory=dict)
 
     # --
 
@@ -95,7 +98,7 @@ class GraphImport:
         self._set("ents", frozendict(ents))
         self._set("rels", frozendict(rels))
 
-    def _resolve(self, idx: int, mapping: dict[int, str]):
+    def _resolve(self, idx: int, mapping: Dict[int, str]):
         if idx not in mapping:
             label = str(idx)
             mapping[idx] = label
@@ -212,7 +215,7 @@ class Graph:
         return self._rnx
 
     @property
-    def edges(self) -> dict[int, Triple]:
+    def edges(self) -> Dict[int, Triple]:
         return self._edges
 
     @property
@@ -269,9 +272,9 @@ class Graph:
 
     def select(
         self,
-        heads: set[int] = None,
-        tails: set[int] = None,
-        edges: set[int] = None,
+        heads: Set[int] = None,
+        tails: Set[int] = None,
+        edges: Set[int] = None,
     ):
         """
 
@@ -290,13 +293,13 @@ class Graph:
         Parameters
         ----------
 
-        heads : set[int]
+        heads : Set[int]
           consider the provided head nodes
 
-        tails : set[int]
+        tails : Set[int]
           consider the provided head nodes
 
-        edges : set[int]
+        edges : Set[int]
           consider the provided edge classes
 
 
@@ -341,10 +344,10 @@ class Graph:
 
     def find(
         self,
-        heads: set[int] = None,
-        tails: set[int] = None,
-        edges: set[int] = None,
-    ) -> set[Triple]:
+        heads: Set[int] = None,
+        tails: Set[int] = None,
+        edges: Set[int] = None,
+    ) -> Set[Triple]:
         """
         Find edges from the graph.
 
@@ -361,13 +364,13 @@ class Graph:
         Parameters
         ----------
 
-        heads : set[int]
+        heads : Set[int]
           consider the provided head nodes
 
-        tails : set[int]
+        tails : Set[int]
           consider the provided head nodes
 
-        edges : set[int]
+        edges : Set[int]
           consider the provided edge classes
 
         Returns

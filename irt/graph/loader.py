@@ -2,9 +2,9 @@
 
 from irt.graph import graph
 from irt.common import helper
-from irt.common import logging
 
 import json
+import logging
 import pathlib
 
 from typing import Any
@@ -12,7 +12,7 @@ from typing import Union
 from typing import Generator
 
 
-log = logging.get("graph.loader")
+log = logging.getLogger(__name__)
 
 
 # --- | CODEX IMPORTER

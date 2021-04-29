@@ -10,11 +10,11 @@ from irt import text
 from irt.text import loader
 from irt.graph import graph
 from irt.common import helper
-from irt.common import logging
 
 import gzip
 import random
 import pathlib
+import logging
 import contextlib
 
 from functools import partial
@@ -28,7 +28,7 @@ from typing import IO
 from typing import Union
 
 
-log = logging.get("text.selector")
+log = logging.getLogger(__name__)
 tqdm = partial(_tqdm, ncols=80)
 
 

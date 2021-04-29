@@ -17,7 +17,7 @@ ENV_IRT_LOG_CONF = "IRT_LOG_CONF"
 ENV_IRT_LOG_OUT = "IRT_LOG_OUT"
 
 
-def _init_logging():
+def init():
     # probe environment for logging configuration:
     #   1. if conf/logging.conf exists use this
     #   2. if IRT_LOG_CONF is set as environment variable use its value
@@ -53,23 +53,10 @@ def _init_logging():
     if fconf is not None:
         fileConfig(cp)
 
-
-# ---
-
-
-def get(name: str) -> logging.Logger:
-    return logging.getLogger(f"irt.{name}")
-
-
-# ---
+    log = logging.getLogger(__name__)
+    log.info("initialized logging")
 
 
 # be nice if used as a library - do not log to stderr as default
 log = logging.getLogger("irt")
 log.addHandler(logging.NullHandler())
-_init_logging()
-
-
-# this is how it used then
-log = get("common")
-log.info("initialized logging")

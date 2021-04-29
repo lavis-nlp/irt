@@ -8,24 +8,27 @@ Create graph splits exposing tbox proxies.
 
 from irt.graph import graph
 from irt.common import helper
-from irt.common import logging
 
 import yaml
 import random
 import pathlib
 import textwrap
 
+import logging
 import dataclasses
 from datetime import datetime
 from functools import lru_cache
 from dataclasses import dataclass
 from itertools import combinations
 
+from typing import Set
+from typing import Dict
+from typing import List
 from typing import Union
 from irt.graph.graph import Triple
 
 
-log = logging.get("graph.split")
+log = logging.getLogger(__name__)
 
 
 def _ents_from_triples(triples):
@@ -51,8 +54,8 @@ class Config:
     threshold: int
 
     # manually add or remove relations to be considered
-    excludelist: set[str]
-    includelist: set[str]
+    excludelist: Set[str]
+    includelist: Set[str]
 
     # strict checks (deactivated for other splits such as vll.fb15k237-OWE)
     # if strict is True, no ow-entity must be in any "preceeding" split
@@ -114,9 +117,9 @@ class Config:
 class Part:
 
     name: str
-    owe: set[int]  # open world entities
-    triples: set[Triple]
-    concepts: set[int]
+    owe: Set[int]  # open world entities
+    triples: Set[Triple]
+    concepts: Set[int]
 
     @property
     @lru_cache
@@ -130,7 +133,7 @@ class Part:
 
     @property
     @lru_cache
-    def heads(self) -> set[int]:
+    def heads(self) -> Set[int]:
         if not self.triples:
             return set()
 
@@ -138,7 +141,7 @@ class Part:
 
     @property
     @lru_cache
-    def tails(self) -> set[int]:
+    def tails(self) -> Set[int]:
         if not self.triples:
             return set()
 
@@ -146,12 +149,12 @@ class Part:
 
     @property
     @lru_cache
-    def linked_concepts(self) -> set[int]:
+    def linked_concepts(self) -> Set[int]:
         return self.entities & self.concepts
 
     @property
     @lru_cache
-    def concept_triples(self) -> set[Triple]:
+    def concept_triples(self) -> Set[Triple]:
         g = graph.Graph(source=graph.GraphImport(triples=self.triples))
         return g.find(heads=self.concepts, tails=self.concepts)
 
@@ -191,10 +194,10 @@ class Dataset:
     cfg: Config
     g: graph.Graph
 
-    id2ent: dict[int, str]
-    id2rel: dict[int, str]
+    id2ent: Dict[int, str]
+    id2rel: Dict[int, str]
 
-    concepts: set[int]
+    concepts: Set[int]
 
     cw_train: Part
     ow_valid: Part
@@ -355,7 +358,7 @@ class Dataset:
         id2ent = _load_dict(path / "entity2id.txt")
         id2rel = _load_dict(path / "relation2id.txt")
 
-        def _load_part(fp, seen: set[int], name: str) -> Part:
+        def _load_part(fp, seen: Set[int], name: str) -> Part:
             nonlocal concepts
 
             with fp.open(mode="r") as fd:
@@ -411,21 +414,21 @@ class Relation:
 
     r: int
     name: str
-    triples: set[Triple]
+    triples: Set[Triple]
 
-    hs: set[int]
-    ts: set[int]
+    hs: Set[int]
+    ts: Set[int]
 
     ratio: float
 
     @property
-    def concepts(self) -> set[int]:
+    def concepts(self) -> Set[int]:
         # either head or tail sets (whichever is smaller)
         reverse = len(self.hs) <= len(self.ts)
         return self.hs if reverse else self.ts
 
     @classmethod
-    def from_graph(K, g: graph.Graph) -> list["Relation"]:
+    def from_graph(K, g: graph.Graph) -> List["Relation"]:
         rels = []
         for r, relname in g.source.rels.items():
             triples = g.find(edges={r})
@@ -457,7 +460,7 @@ class Splitter:
     path: pathlib.Path
 
     @property
-    def rels(self) -> list[Relation]:
+    def rels(self) -> List[Relation]:
         return self._rels
 
     def __post_init__(self):
@@ -555,10 +558,10 @@ class Splitter:
 
     def write(
         self,
-        concepts: set[int],
-        cw: set[Triple],
-        ow_valid: set[Triple],
-        ow_test: set[Triple],
+        concepts: Set[int],
+        cw: Set[Triple],
+        ow_valid: Set[Triple],
+        ow_test: Set[Triple],
     ):
         def _write(name, triples):
             with (self.path / name).open(mode="w") as fd:

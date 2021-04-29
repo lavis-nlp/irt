@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 
 from irt import IRTError
-from irt.common import logging
 
 import git
+import logging
 import numpy as np
 
 import random
@@ -12,7 +12,7 @@ import pathlib
 from typing import Union
 
 
-log = logging.get("common.helper")
+log = logging.getLogger(__name__)
 
 
 def path(
