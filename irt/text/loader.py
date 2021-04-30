@@ -1,24 +1,23 @@
 # -*- coding: utf-8 -*-
 
 
+import irt
+from irt.common import helper
+
 import json
 import sqlite3
 import pathlib
+from tqdm import tqdm as _tqdm
 
-import irt
-from irt.common import helper
-from irt.common import logging
-
+import logging
 from functools import partial
 from functools import lru_cache
 from dataclasses import dataclass
 
-from tqdm import tqdm as _tqdm
-
 from typing import Optional
 
 
-log = logging.get("text.loader")
+log = logging.getLogger(__name__)
 tqdm = partial(_tqdm, ncols=80)
 
 

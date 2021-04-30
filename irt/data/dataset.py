@@ -216,6 +216,41 @@ class Split:
                     f" only closed world entities in {part.name}"
                 )
 
+    # ---
+
+    @classmethod
+    def load(K, path: Union[str, pathlib.Path]):
+        log.info("loading split data")
+
+        path = helper.path(path, exists=True)
+        cfg = graph_split.Config.load(path / "config.yml")
+
+        with (path / "concepts.txt").open(mode="r") as fd:
+            # we are only interested in the entity ids
+            concepts = {int(e) for e, _ in (line.split(maxsplit=1) for line in fd)}
+
+        parts, seen = {}, set()
+        for name in ("closed_world", "open_world-valid", "open_world-test"):
+            log.info(f"initializing part: {name}")
+            key = name.replace("-", "_")
+
+            with (path / f"{name}.txt").open(mode="r") as fd:
+                triples = {tuple(map(int, line.split())) for line in fd}
+
+            entities = _ents_from_triples(triples)
+
+            part = Part(
+                name=name,
+                owe=entities - seen,
+                triples=triples,
+            )
+
+            parts[key] = part
+            seen |= entities
+
+        self = K(cfg=cfg, concepts=concepts, **parts)
+        return self
+
 
 @dataclass(frozen=True)
 class TextSample:
@@ -263,6 +298,35 @@ class Text(defaultdict):
         s += textwrap.indent(stats, "  ")
         return s
     # fmt: on
+
+    # ---
+
+    @classmethod
+    def load(K, path: Union[str, pathlib.Path], mode: text.Mode):
+        log.info(f"loading text data ({mode.value=})")
+
+        self = K()
+
+        path = helper.path(path, exists=True)
+        fpath = path / text.Mode.filename(mode)
+
+        with gzip.open(str(fpath), mode="rb") as fd:
+
+            header = next(fd).decode().strip()
+            assert header.startswith("#")
+
+            splits = (
+                # strip each value of the split lines
+                map(str.strip, line.decode().split(text.SEP, maxsplit=2))
+                for line in fd
+                if line.strip()
+            )
+
+            for e, mention, context in splits:
+                sample = TextSample(mention=mention, context=context)
+                self[int(e)].add(sample)
+
+        return self
 
 
 class Dataset:
@@ -316,62 +380,6 @@ class Dataset:
     # ---
     # initialization
 
-    def _init_graph(self, path: pathlib.Path) -> None:
-        path = helper.path(path / "graph", exists=True)
-        self.graph = graph.Graph.load(path=path)
-
-    def _init_split(self, path: pathlib.Path) -> None:
-        log.info("loading split data")
-
-        path = helper.path(path / "split", exists=True)
-        cfg = graph_split.Config.load(path / "config.yml")
-
-        with (path / "concepts.txt").open(mode="r") as fd:
-            # we are only interested in the entity ids
-            concepts = {int(e) for e, _ in (line.split(maxsplit=1) for line in fd)}
-
-        parts, seen = {}, set()
-        for name in ("closed_world", "open_world-valid", "open_world-test"):
-            log.info(f"initializing part: {name}")
-            key = name.replace("-", "_")
-
-            with (path / f"{name}.txt").open(mode="r") as fd:
-                triples = {tuple(map(int, line.split())) for line in fd}
-
-            entities = _ents_from_triples(triples)
-
-            part = Part(
-                name=name,
-                owe=entities - seen,
-                triples=triples,
-            )
-
-            parts[key] = part
-            seen |= entities
-
-        self.split = Split(cfg=cfg, concepts=concepts, **parts)
-
-    def _init_text(self, path, mode: text.Mode):
-        log.info(f"loading text data ({mode.value=})")
-
-        path = helper.path(path / "text", exists=True)
-        self.text = Text()
-
-        fpath = path / text.Mode.filename(mode)
-        with gzip.open(str(fpath), mode="rb") as fd:
-            header = next(fd).decode().strip()
-            assert header.startswith("#")
-
-            splits = (
-                # strip each value of the split lines
-                map(str.strip, line.decode().split(text.SEP, maxsplit=2))
-                for line in fd
-                if line.strip()
-            )
-
-            for e, mention, context in splits:
-                self.text[int(e)].add(TextSample(mention=mention, context=context))
-
     def __init__(
         self,
         path: Union[str, pathlib.Path],
@@ -381,6 +389,6 @@ class Dataset:
         self._check = check
         path = helper.path(path, exists=True)
 
-        self._init_graph(path)
-        self._init_split(path)
-        self._init_text(path, mode=mode)
+        self.graph = graph.Graph.load(path=path / "graph")
+        self.split = Split.load(path=path / "split")
+        self.text = Text.load(path=path / "text", mode=mode)

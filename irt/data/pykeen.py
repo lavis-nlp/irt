@@ -8,11 +8,14 @@ import logging
 import textwrap
 from abc import ABC
 from abc import abstractmethod
+from functools import lru_cache
 
 import torch
 from pykeen.triples import TriplesFactory
 
+from typing import List
 from typing import Dict
+from typing import Tuple
 from typing import Union
 from typing import Optional
 from typing import Sequence
@@ -33,86 +36,24 @@ class Keen(ABC):
     """
 
     dataset: dataset.Dataset
-
-    # # ID MAPPING
-
-    # # this maps the IRT ids to the automatically
-    # # assigned ids of the pykeen triples factories
-    # irt2keen: Dict[int, int]
-
-    # # id-mapping rests upon prefixing the entity and
-    # # relation labels with the IRT id and extracting
-    # # those again after pykeen assigned its own ids
-
-    # def e2s(self, e: int):
-    #     return f"{e}:{self.dataset.id2ent[e]}"
-
-    # def r2s(self, r: int):
-    #     return f"{r}:{self.dataset.id2rel[r]}"
-
-    # def s2id(self, s: str):
-    #     return int(s.split(":", maxsplit=1)[0])
-
-    # def triple_to_str(self, h: int, t: int, r: int):
-    #     """
-
-    #     Transform a irtm.graphs triple to a pykeen string representation
-
-    #     Parameters
-    #     ----------
-
-    #     h: int
-    #       head id
-
-    #     t: int
-    #       tail id
-
-    #     r: int
-    #       relation id
-
-    #     Returns
-    #     -------
-
-    #     htr: Tuple[str, str, str]
-    #       String representation of (h, t, r) prefixed with irt ids
-
-    #     """
-    #     return self.e2s(h), self.e2s(t), self.r2s(r)
-
-    # def triples_to_ndarray(self, triples: Collection[Tuple[int]]):
-    #     """
-
-    #     Transform htr triples to ndarray of hrt string rows
-
-    #     Parameters
-    #     ----------
-
-    #     htr: Collection[Tuple[int]]
-    #       irtm graph triples
-
-    #     Returns
-    #     -------
-
-    #     Numpy array of shape [N, 3] containing triples as
-    #     strings of form hrt.
-
-    #     """
-
-    #     # transform triples to ndarray and re-arrange
-    #     # triple columns from (h, t, r) to (h, r, t)
-    #     return np.array(list(map(self.triple_to_str, triples)))[:, (0, 2, 1)]
+    irt2keen: Dict[int, int]
 
     # ---
 
     @property
     @abstractmethod
-    def factories(self) -> Dict[str, TriplesFactory]:
+    def factories(self) -> List[Tuple[str, TriplesFactory]]:
         raise NotImplementedError()
+
+    @property
+    @lru_cache
+    def keen2irt(self) -> Dict[int, int]:
+        return {v: k for k, v in self.irt2keen.items()}
 
     def __str__(self) -> str:
         return f"keen dataset: [{self.dataset.name}]: " + (
             " | ".join(
-                f"{name}={factory.num_triples}" for name, factory in self._factories
+                f"{name}={factory.num_triples}" for name, factory in self.factories
             )
         )
 
@@ -135,19 +76,29 @@ class Keen(ABC):
         return s
 
     # ---
+
     def __init__(self, dataset: dataset.Dataset):
         self.dataset = dataset
 
 
-def triples2factory(triples: Collection[Sequence[int]]):
+def remap(*entities):
+    assert not len(set.intersection(*entities)) if len(entities) > 1 else True
+
+    flat = enumerate(e for subset in entities for e in subset)
+    idmap = {old: new for new, old in flat}
+
+    return idmap
+
+
+def triples2factory(triples: Collection[Sequence[int]], idmap: Dict[int, int]):
     """
 
     Convert htr triples to a pykeen triples factory
 
     """
 
-    triples = list(triples)
-    htr = torch.Tensor(triples).to(dtype=torch.long)
+    mapped = list((idmap[h], idmap[t], r) for h, t, r in triples)
+    htr = torch.Tensor(mapped).to(dtype=torch.long)
 
     # move from htr to hrt
     hrt = htr[:, (0, 2, 1)]
@@ -187,30 +138,34 @@ class KeenClosedWorld(Keen):
 
         self.seed = seed
         self.split = split
+        self.irt2keen = remap(dataset.split.closed_world.owe)
 
         super().__init__(dataset=dataset, *args, **kwargs)
         helper.seed(seed)
 
         # create splits
-        factory = triples2factory(dataset.split.closed_world.triples)
+        factory = triples2factory(
+            triples=dataset.split.closed_world.triples,
+            idmap=self.irt2keen,
+        )
+
         splits = factory.split(ratios=split, random_state=seed)
         assert len(splits) in (2, 3), "invalid split configuration"
 
         self.training, self.validation, *_ = splits
-        if len(splits) == 3:
-            self.testing = splits[2]
+        self.testing = splits[2] if len(splits) == 3 else None
 
         log.info(f"initialized triples split with ratio {split}")
 
     @property
     def factories(self):
-        factories = {
-            "training": self.training,
-            "validation": self.validation,
-        }
+        factories = [
+            ("training", self.training),
+            ("validation", self.validation),
+        ]
 
         if self.testing:
-            factories["testing"] = self.testing
+            factories.append(("testing", self.testing))
 
         return factories
 
@@ -229,20 +184,29 @@ class KeenOpenWorld(Keen):
     def __init__(self, *args, dataset: dataset.Dataset, **kwargs):
         super().__init__(dataset=dataset, *args, **kwargs)
 
+        self.irt2keen = remap(
+            dataset.split.closed_world.owe,
+            dataset.split.open_world_valid.owe,
+            dataset.split.open_world_test.owe,
+        )
+
         self.closed_world = triples2factory(
-            dataset.split.closed_world.triples,
+            triples=dataset.split.closed_world.triples,
+            idmap=self.irt2keen,
         )
         self.open_world_valid = triples2factory(
-            dataset.split.open_world_valid.triples,
+            triples=dataset.split.open_world_valid.triples,
+            idmap=self.irt2keen,
         )
         self.open_world_testing = triples2factory(
-            dataset.split.open_world_testing.triples,
+            triples=dataset.split.open_world_testing.triples,
+            idmap=self.irt2keen,
         )
 
     @property
     def factories(self):
-        return {
-            "closed world": self.closed_world,
-            "open world validation": self.open_world_valid,
-            "open world testing": self.open_world_testing,
-        }
+        return [
+            ("closed world", self.closed_world),
+            ("open world validation", self.open_world_valid),
+            ("open world testing", self.open_world_testing),
+        ]
