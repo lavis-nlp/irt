@@ -2,8 +2,12 @@
 # fmt: off
 
 import pathlib
+import logging
+
 
 __version__ = '1.0'
+
+log = logging.getLogger(__name__)
 
 
 # always look relative from the project's root directory
@@ -32,13 +36,15 @@ class IRTError(Exception):
 # -- register classes for convient access
 
 from irt.data import dataset  # noqa: E402
-from irt.data import pykeen  # noqa: E402
 
 # Vanilla Python
 Dataset = dataset.Dataset
 
-# Knowledge Graph Completion with PyKeen
-KeenClosedWorld = pykeen.KeenClosedWorld
-KeenOpenWorld = pykeen.KeenOpenWorld
+try:
+    from irt.data import pykeen  # noqa: E402
 
-# Mapper Training with PyTorch Lightning
+    # Knowledge Graph Completion with PyKeen
+    KeenClosedWorld = pykeen.KeenClosedWorld
+    KeenOpenWorld = pykeen.KeenOpenWorld
+except ModuleNotFoundError as err:
+    log.warning(f"cannot import pykeen datasets: {err}")
