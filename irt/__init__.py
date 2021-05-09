@@ -25,6 +25,7 @@ class ENV:
     DATA_DIR:    pathlib.Path = _root_path / _DATA_DIR
     DATASET_DIR: pathlib.Path = _root_path / _DATA_DIR / 'irt'
     SRC_DIR:     pathlib.Path = _root_path / _DATA_DIR / 'src'
+    CACHE_DIR:   pathlib.Path = _root_path / _DATA_DIR / 'cache'
 # fmt: on
 
 
@@ -46,5 +47,17 @@ try:
     # Knowledge Graph Completion with PyKeen
     KeenClosedWorld = pykeen.KeenClosedWorld
     KeenOpenWorld = pykeen.KeenOpenWorld
+except ModuleNotFoundError as err:
+    log.warning(f"cannot import pykeen datasets: {err}")
+
+
+try:
+    from irt.data import pytorch  # noqa: E402
+
+    # Training data for pytorch
+    TorchDataset = pytorch.TorchDataset
+    TorchLoader = pytorch.TorchDataLoader
+    TorchModule = pytorch.TorchDataModule
+
 except ModuleNotFoundError as err:
     log.warning(f"cannot import pykeen datasets: {err}")

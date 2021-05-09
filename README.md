@@ -32,12 +32,29 @@ and the second - **IRT-CDE** - utilizes
 knowledge graph triples for the *closed world (cw)* and *open world
 (ow)* split. The ow-split is partitioned into validation and test
 data. Each entity of the kg is assigned a set of textual description
-of mentions. We offer sets of size 1, 5, 15, and 30.
+of mentions.
+
+
+## Download
+
+TBA
+
+
+## Loading
 
 TODO describe `.load`-Interface for the IRT dataset.
 
 
+## Data Formats
+
+TODO
+
 ### Graph Data
+
+TODO describe file formats
+
+
+### Split Data
 
 TODO describe file formats
 
@@ -47,9 +64,44 @@ TODO describe file formats
 TODO describe file formats
 
 
-## Download
+## PyKeen Dataset
 
-TBA
+TODO
+
+
+## Pytorch Dataset
+
+We offer a `torch.utils.data.Dataset`, a `torch.utils.data.DataLoader`
+and a `pytorch_lightning.DataModule`. The Dataset abstracts what a
+"sample" is and how to collate samples to batches:
+
+
+``` python
+from irt import TorchDataset
+
+# given you have loaded a irt.Dataset instance called "dataset"
+# 'model_name' is one of huggingface.co/models
+torch_dataset = TorchDataset(
+    model_name='bert-base-cased',
+    dataset=dataset,
+    part=dataset.split.closed_world,
+)
+
+# a sample is an entity-to-token-index mapping:
+torch_dataset[100]
+# -> Tuple[int, List[int]]
+# (124, [[101, 1130, ...], ...])
+
+# and it offers a collator for batching:
+batch = TorchDataset.collate_fn([torch_dataset[0], torch_dataset[1]])
+# batch: Tuple[Tuple[int], torch.Tensor]
+
+len(batch[0])   # -> 60
+batch[1].shape  # -> 60, 105
+```
+
+
+
 
 
 ## Bring Your Own Data
