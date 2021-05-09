@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
 
-from irt import text
 from irt.graph import graph
+from irt import text as itxt
 from irt.graph import split as graph_split
 from irt.common import helper
 
@@ -21,6 +21,7 @@ from typing import Set
 from typing import Dict
 from typing import Tuple
 from typing import Union
+from typing import Callable
 
 
 def _ents_from_triples(triples):
@@ -260,8 +261,12 @@ class TextSample:
 
 
 class Text(defaultdict):
-    def __init__(self):
+
+    mode: itxt.Mode
+
+    def __init__(self, mode: itxt.Mode):
         super().__init__(set)
+        self.mode = mode
 
     def __str__(self) -> str:
         fmt = "irt text: ~{mean_contexts:.2f} text contexts per entity"
@@ -286,7 +291,7 @@ class Text(defaultdict):
     # fmt: off
     @property
     def description(self):
-        s = "IRT Text (per entity)\n"
+        s = "IRT Text ({self.mode}))\n"
 
         stats = (
             "mean contexts: {mean_contexts:.2f}\n"
@@ -302,13 +307,13 @@ class Text(defaultdict):
     # ---
 
     @classmethod
-    def load(K, path: Union[str, pathlib.Path], mode: text.Mode):
+    def load(K, path: Union[str, pathlib.Path], mode: itxt.Mode):
         log.info(f"loading text data ({mode.value=})")
 
-        self = K()
+        self = K(mode=mode)
 
         path = helper.path(path, exists=True)
-        fpath = path / text.Mode.filename(mode)
+        fpath = path / itxt.Mode.filename(mode)
 
         with gzip.open(str(fpath), mode="rb") as fd:
 
@@ -317,7 +322,7 @@ class Text(defaultdict):
 
             splits = (
                 # strip each value of the split lines
-                map(str.strip, line.decode().split(text.SEP, maxsplit=2))
+                map(str.strip, line.decode().split(itxt.SEP, maxsplit=2))
                 for line in fd
                 if line.strip()
             )
@@ -338,9 +343,7 @@ class Dataset:
 
     """
 
-    graph: graph.Graph
-    split: Split
-    text: Text  # i.e. Dict[int, set[TextSample]]
+    path: pathlib.Path
 
     # ---
 
@@ -362,6 +365,39 @@ class Dataset:
 
     # ---
 
+    def _lazy(self, attr: str, fn: Callable, *args, **kwargs):
+        if not hasattr(self, attr):
+            setattr(self, attr, fn(*args, **kwargs))
+
+        return getattr(self, attr)
+
+    @property
+    def graph(self) -> graph.Graph:
+        return self._lazy(
+            "_graph",
+            graph.Graph.load,
+            path=self.path / "graph",
+        )
+
+    @property
+    def split(self) -> Split:
+        return self._lazy(
+            "_split",
+            Split.load,
+            path=self.path / "split",
+        )
+
+    @property
+    def text(self) -> Text:  # i.e. Dict[int, set[TextSample]]
+        return self._lazy(
+            "_text",
+            Text.load,
+            path=self.path / "text",
+            mode=self._text_mode,
+        )
+
+    # ---
+
     def __str__(self):
         return f"IRT dataset:\n{self.graph}\n{self.split}\n{self.text}"
 
@@ -378,17 +414,14 @@ class Dataset:
     # fmt: on
 
     # ---
-    # initialization
 
     def __init__(
         self,
         path: Union[str, pathlib.Path],
-        mode: text.Mode = text.Mode.CLEAN,
+        mode: itxt.Mode = itxt.Mode.CLEAN,
         check: bool = False,
     ):
         self._check = check
-        path = helper.path(path, exists=True)
+        self._text_mode = mode
 
-        self.graph = graph.Graph.load(path=path / "graph")
-        self.split = Split.load(path=path / "split")
-        self.text = Text.load(path=path / "text", mode=mode)
+        self.path = helper.path(path, exists=True)
