@@ -21,12 +21,15 @@ import transformers as tf
 import torch.utils.data as td
 import pytorch_lightning as pl
 
+import enum
 import logging
 from functools import partial
+from functools import lru_cache
 from collections import defaultdict
 
 from typing import List
 from typing import Tuple
+from typing import Optional
 
 
 log = logging.getLogger(__name__)
@@ -105,7 +108,6 @@ class TorchDataset(td.Dataset):
                     fd.write(tokstr)
 
         else:
-
             log.info("loading indexes from file")
             with path.open(mode="r") as fd:
 
@@ -125,8 +127,8 @@ class TorchDataset(td.Dataset):
         dataset: dataset.Dataset,
     ):
         super().__init__()
-
         self.name = part.name
+
         self.model_name = model_name
         self.dataset = dataset
 
@@ -181,8 +183,164 @@ class TorchDataset(td.Dataset):
 
 
 class TorchDataLoader(td.DataLoader):
-    pass
+
+    subbatch_size: int
+
+    def __init__(self, torch_dataset, subbatch_size: int, *args, **kwargs):
+        super().__init__(
+            torch_dataset,
+            *args,
+            collate_fn=torch_dataset.collate_fn,
+            **kwargs,
+        )
+
+        self.subbatch_size = subbatch_size
+
+
+class Sampler(enum.Enum):
+
+    node_degree = "node degree"
 
 
 class TorchDataModule(pl.LightningDataModule):
-    pass
+
+    # pykeen open-world dataset
+    kow_dataset: dataset.Dataset
+
+    train_set: TorchDataset
+    valid_set: TorchDataset
+    test_set: TorchDataset
+
+    # ---
+
+    @lru_cache
+    def subbatch_size(self, kind: str = None) -> int:
+        log.info(f"subbatch_size cache miss: {kind=}")
+
+        if kind == "train":
+            return self.train_dataloader().subbatch_size
+
+        assert kind == "valid"
+        return self.val_dataloader().subbatch_size
+
+    @property
+    def kgc_dataloader(self):
+        return self.val_dataloader()[0]
+
+    # ---
+
+    def __init__(
+        self,
+        model_name: str,
+        kow: irt.KeenOpenWorld,
+        dataloader_train_kwargs: dict,
+        dataloader_valid_kwargs: dict,
+        dataloader_test_kwargs: dict,
+        sampler: Optional[str] = None,
+        sampler_kwargs: Optional[dict] = None,
+    ):
+        """
+
+        Create a new DataModule for an IRT dataset
+
+        Parameters
+        ----------
+
+        model_name : str
+          One of the huggingface transformer models
+
+        kow : irt.KeenOpenWorld
+          IRT encapsulated for open-world KGC
+
+        sampler: Optional[str]
+          Currently, only "node degree" is supported which selects
+          samples more frequently when they are highly connected
+          in the graph
+
+        sampler_kwargs: Optional[dict]
+          For "node degree":
+             num_samples: int --  Total count of samples
+             replacement: bool -- Whether samples can be drawn multiple times
+
+        Returns
+        -------
+
+
+        """
+        super().__init__()
+        self.model_name = model_name
+        self.kow = kow
+
+        self._dataloader_train_kwargs = dataloader_train_kwargs
+        self._dataloader_valid_kwargs = dataloader_valid_kwargs
+        self._dataloader_test_kwargs = dataloader_test_kwargs
+
+        self._sampler_name = sampler
+        self._sampler_kwargs = sampler_kwargs
+
+    def prepare_data(self, *args, **kwargs):
+        # called once on master for multi-gpu setups
+        # do not set any state here
+        pass
+
+    def setup(self, *args, **kwargs):
+
+        self.train_set = TorchDataset(
+            model_name=self.model_name,
+            dataset=self.kow.dataset,
+            part=self.kow.dataset.split.closed_world,
+        )
+
+        self._sampler = None
+        if self._sampler_name:
+            self._sampler_name = Sampler(self._sampler_name)
+
+            num_samples = self._sampler_kwargs["num_samples"]
+            if num_samples.startswith("x"):
+                num_samples = len(self.train_set) * int(num_samples[1:])
+            elif num_samples == "triples":
+                num_samples = int(sum(self.train_set.degrees) // 2)
+
+            replacement = self._sampler_kwargs["replacement"]
+
+            self._sampler = td.WeightedRandomSampler(
+                weights=1 / self.train_set.degrees,
+                num_samples=num_samples,
+                replacement=replacement,
+            )
+
+            log.info(f"using node degreee sampler {num_samples=} {replacement=}")
+
+        self.valid_set = TorchDataset(
+            model_name=self.model_name,
+            dataset=self.kow.dataset,
+            part=self.kow.dataset.split.open_world_valid,
+        )
+
+        self.test_set = TorchDataset(
+            model_name=self.model_name,
+            dataset=self.kow.dataset,
+            part=self.kow.dataset.split.open_world_test,
+        )
+
+    # FOR LIGHTNING
+
+    def train_dataloader(self) -> TorchDataLoader:
+        return TorchDataLoader(
+            self.train_set,
+            sampler=self._sampler,
+            **self._dataloader_train_kwargs,
+        )
+
+    def val_dataloader(self) -> TorchDataLoader:
+        return TorchDataLoader(
+            self.valid_set,
+            **self._dataloader_valid_kwargs,
+        )
+
+    def test_dataloader(self) -> TorchDataLoader:
+        # see evaluator.py
+        return TorchDataLoader(
+            self.test_set,
+            **self._dataloader_test_kwargs,
+        )

@@ -1,5 +1,13 @@
 # -*- coding: utf-8 -*-
 
+"""
+
+IRT dataset wrapper for use by pykeen
+
+https://github.com/pykeen/pykeen
+
+"""
+
 
 from irt.data import dataset
 from irt.common import helper
@@ -179,7 +187,7 @@ class KeenOpenWorld(Keen):
 
     closed_world: TriplesFactory
     open_world_valid: TriplesFactory
-    open_world_testing: Optional[TriplesFactory]
+    open_world_test: TriplesFactory
 
     def __init__(self, *args, dataset: dataset.Dataset, **kwargs):
         super().__init__(dataset=dataset, *args, **kwargs)
@@ -198,8 +206,8 @@ class KeenOpenWorld(Keen):
             triples=dataset.split.open_world_valid.triples,
             idmap=self.irt2keen,
         )
-        self.open_world_testing = triples2factory(
-            triples=dataset.split.open_world_testing.triples,
+        self.open_world_test = triples2factory(
+            triples=dataset.split.open_world_test.triples,
             idmap=self.irt2keen,
         )
 
@@ -208,5 +216,5 @@ class KeenOpenWorld(Keen):
         return [
             ("closed world", self.closed_world),
             ("open world validation", self.open_world_valid),
-            ("open world testing", self.open_world_testing),
+            ("open world testing", self.open_world_test),
         ]
