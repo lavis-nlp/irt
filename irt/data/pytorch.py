@@ -233,11 +233,11 @@ class TorchDataModule(pl.LightningDataModule):
         self,
         model_name: str,
         kow: irt.KeenOpenWorld,
-        dataloader_train_kwargs: dict,
-        dataloader_valid_kwargs: dict,
-        dataloader_test_kwargs: dict,
+        dataloader_train_args: dict,
+        dataloader_valid_args: dict,
+        dataloader_test_args: dict,
         sampler: Optional[str] = None,
-        sampler_kwargs: Optional[dict] = None,
+        sampler_args: Optional[dict] = None,
     ):
         """
 
@@ -257,7 +257,7 @@ class TorchDataModule(pl.LightningDataModule):
           samples more frequently when they are highly connected
           in the graph
 
-        sampler_kwargs: Optional[dict]
+        sampler_args: Optional[dict]
           For "node degree":
              num_samples: int --  Total count of samples
              replacement: bool -- Whether samples can be drawn multiple times
@@ -271,12 +271,12 @@ class TorchDataModule(pl.LightningDataModule):
         self.model_name = model_name
         self.kow = kow
 
-        self._dataloader_train_kwargs = dataloader_train_kwargs
-        self._dataloader_valid_kwargs = dataloader_valid_kwargs
-        self._dataloader_test_kwargs = dataloader_test_kwargs
+        self._dataloader_train_args = dataloader_train_args
+        self._dataloader_valid_args = dataloader_valid_args
+        self._dataloader_test_args = dataloader_test_args
 
         self._sampler_name = sampler
-        self._sampler_kwargs = sampler_kwargs
+        self._sampler_args = sampler_args
 
     def prepare_data(self, *args, **kwargs):
         # called once on master for multi-gpu setups
@@ -295,13 +295,13 @@ class TorchDataModule(pl.LightningDataModule):
         if self._sampler_name:
             self._sampler_name = Sampler(self._sampler_name)
 
-            num_samples = self._sampler_kwargs["num_samples"]
+            num_samples = self._sampler_args["num_samples"]
             if num_samples.startswith("x"):
                 num_samples = len(self.train_set) * int(num_samples[1:])
             elif num_samples == "triples":
                 num_samples = int(sum(self.train_set.degrees) // 2)
 
-            replacement = self._sampler_kwargs["replacement"]
+            replacement = self._sampler_args["replacement"]
 
             self._sampler = td.WeightedRandomSampler(
                 weights=1 / self.train_set.degrees,
@@ -329,18 +329,18 @@ class TorchDataModule(pl.LightningDataModule):
         return TorchDataLoader(
             self.train_set,
             sampler=self._sampler,
-            **self._dataloader_train_kwargs,
+            **self._dataloader_train_args,
         )
 
     def val_dataloader(self) -> TorchDataLoader:
         return TorchDataLoader(
             self.valid_set,
-            **self._dataloader_valid_kwargs,
+            **self._dataloader_valid_args,
         )
 
     def test_dataloader(self) -> TorchDataLoader:
         # see evaluator.py
         return TorchDataLoader(
             self.test_set,
-            **self._dataloader_test_kwargs,
+            **self._dataloader_test_args,
         )
