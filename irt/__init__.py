@@ -56,8 +56,8 @@ try:
 
     # Training data for pytorch
     TorchDataset = pytorch.TorchDataset
-    TorchLoader = pytorch.TorchDataLoader
-    TorchModule = pytorch.TorchDataModule
+    TorchLoader = pytorch.TorchLoader
+    TorchModule = pytorch.TorchModule
 
 except ModuleNotFoundError as err:
-    log.warning(f"cannot import pykeen datasets: {err}")
+    log.warning(f"cannot import pytorch datasets: {err}")

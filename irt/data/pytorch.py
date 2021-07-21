@@ -11,6 +11,7 @@ https://github.com/PyTorchLightning/pytorch-lightning
 
 import irt
 from irt.data import dataset
+from irt.common import helper
 
 import torch
 from torch.nn.utils.rnn import pad_sequence
@@ -23,17 +24,49 @@ import pytorch_lightning as pl
 
 import enum
 import logging
+import pathlib
 from functools import partial
 from functools import lru_cache
 from collections import defaultdict
 
 from typing import List
 from typing import Tuple
+from typing import Union
 from typing import Optional
 
 
 log = logging.getLogger(__name__)
 tqdm = partial(_tqdm, ncols=80)
+
+
+def load_tokenizer(
+    model_name: str,
+    dataset_path: Union[str, pathlib.Path],
+) -> tf.BertTokenizer:
+
+    dataset_path = helper.path(dataset_path, exists=True)
+    path = dataset_path / "torch" / model_name / "tokenizer"
+
+    if path.is_dir():
+        log.info("loading tokenizer from disk")
+        tokenizer = tf.BertTokenizer.from_pretrained(str(path))
+
+    else:
+        log.info("creating new tokenizer")
+        cache_dir = str(irt.ENV.CACHE_DIR / "lib.transformers")
+        tokenizer = tf.BertTokenizer.from_pretrained(
+            model_name,
+            cache_dir=cache_dir,
+            additional_special_tokens=[
+                irt.text.TOK_MENTION_START,
+                irt.text.TOK_MENTION_END,
+            ],
+        )
+
+        log.info("saving tokenizer to disk")
+        tokenizer.save_pretrained(str(path))
+
+    return tokenizer
 
 
 class TorchDataset(td.Dataset):
@@ -62,28 +95,6 @@ class TorchDataset(td.Dataset):
     def __getitem__(self, idx: int) -> Tuple[int, List[int]]:
         return self._flat[idx]
 
-    def _get_tokenizer(self):
-        path = self.dataset.path / "torch" / self.model_name / "tokenizer"
-
-        if path.is_dir():
-            log.info("loading tokenizer from disk")
-            self.tokenizer = tf.BertTokenizer.from_pretrained(str(path))
-
-        else:
-            log.info("creating new tokenizer")
-            cache_dir = str(irt.ENV.CACHE_DIR / "lib.transformers")
-            self.tokenizer = tf.BertTokenizer.from_pretrained(
-                self.model_name,
-                cache_dir=cache_dir,
-                additional_special_tokens=[
-                    irt.text.TOK_MENTION_START,
-                    irt.text.TOK_MENTION_END,
-                ],
-            )
-
-            log.info("saving tokenizer to disk")
-            self.tokenizer.save_pretrained(str(path))
-
     def _tokenize(self, part):
         fname = f"{self.dataset.text.mode.value}.{part.name}.txt"
         path = self.dataset.path / "torch" / self.model_name / fname
@@ -107,6 +118,8 @@ class TorchDataset(td.Dataset):
                     tokstr = prefix + f"\n{prefix}".join(idxstr) + "\n"
                     fd.write(tokstr)
 
+            log.info("finished tokenization)")
+
         else:
             log.info("loading indexes from file")
             with path.open(mode="r") as fd:
@@ -117,8 +130,6 @@ class TorchDataset(td.Dataset):
                     accum[int(estr)].append(list(map(int, idxstr.split())))
 
             self._flat = tuple(accum.items())
-
-        log.info("finished tokenization")
 
     def __init__(
         self,
@@ -133,9 +144,12 @@ class TorchDataset(td.Dataset):
         self.dataset = dataset
 
         # tokenize
-        self._get_tokenizer()
-        assert self.tokenizer
+        self.tokenizer = load_tokenizer(
+            model_name=model_name,
+            dataset_path=self.dataset.path,
+        )
 
+        assert self.tokenizer
         self._tokenize(part)
         assert self._flat
 
@@ -182,7 +196,7 @@ class TorchDataset(td.Dataset):
         return (ents, ctxs)
 
 
-class TorchDataLoader(td.DataLoader):
+class TorchLoader(td.DataLoader):
 
     subbatch_size: int
 
@@ -202,10 +216,10 @@ class Sampler(enum.Enum):
     node_degree = "node degree"
 
 
-class TorchDataModule(pl.LightningDataModule):
+class TorchModule(pl.LightningDataModule):
 
     # pykeen open-world dataset
-    kow_dataset: dataset.Dataset
+    kow: irt.KeenOpenWorld
 
     train_set: TorchDataset
     valid_set: TorchDataset
@@ -225,7 +239,7 @@ class TorchDataModule(pl.LightningDataModule):
 
     @property
     def kgc_dataloader(self):
-        return self.val_dataloader()[0]
+        return self.val_dataloader()
 
     # ---
 
@@ -325,22 +339,22 @@ class TorchDataModule(pl.LightningDataModule):
 
     # FOR LIGHTNING
 
-    def train_dataloader(self) -> TorchDataLoader:
-        return TorchDataLoader(
+    def train_dataloader(self) -> TorchLoader:
+        return TorchLoader(
             self.train_set,
             sampler=self._sampler,
             **self._dataloader_train_args,
         )
 
-    def val_dataloader(self) -> TorchDataLoader:
-        return TorchDataLoader(
+    def val_dataloader(self) -> TorchLoader:
+        return TorchLoader(
             self.valid_set,
             **self._dataloader_valid_args,
         )
 
-    def test_dataloader(self) -> TorchDataLoader:
+    def test_dataloader(self) -> TorchLoader:
         # see evaluator.py
-        return TorchDataLoader(
+        return TorchLoader(
             self.test_set,
             **self._dataloader_test_args,
         )
