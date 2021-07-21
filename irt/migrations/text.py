@@ -68,9 +68,9 @@ class Legacy(text_loader.Loader):
         # the marked dataset
 
         files = (
-            "cw.train-contexts.txt.gz",
-            "ow.valid-contexts.txt.gz",
-            "ow.test-contexts.txt.gz",
+            "cw.train-sentences.txt.gz",
+            "ow.valid-sentences.txt.gz",
+            "ow.test-sentences.txt.gz",
         )
 
         e2mention = defaultdict(deque)
@@ -107,17 +107,30 @@ class Legacy(text_loader.Loader):
 if __name__ == "__main__":
 
     # irt-cde conversion 21/04/25
+    """
     selector.create(
         loader=Legacy(
             irt.ENV.SRC_DIR / "legacy/cde.m_8051991_27/contexts-v7-2020-12-31.db"
         ),
-        path=irt.ENV.DATASET_DIR / "irt-cde",
+        path=irt.ENV.DATASET_DIR / "irt.cde",
         contexts=30,
         seed=8051991,
         shuffle=False,
         mark=True,
         mask=True,
     )
+    """
 
-    # irt-fb conversion 21/04/25
-    pass
+    # irt-fb conversion 21/07/21
+    selector.create(
+        loader=Legacy(
+            irt.ENV.SRC_DIR
+            / "legacy/oke.fb15k237_26041992_100/contexts-v7-enwiki-20200920-100-500.db"
+        ),
+        path=irt.ENV.DATASET_DIR / "irt.fb",
+        contexts=30,
+        seed="26041992",
+        shuffle=False,
+        mark=True,
+        mask=True,
+    )
