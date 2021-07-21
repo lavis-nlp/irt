@@ -24,7 +24,7 @@ def path(
 ) -> pathlib.Path:
     """
 
-    Quickly create pathlib.Paths
+    Quickly create and check pathlib.Paths
 
     Parameters
     ----------

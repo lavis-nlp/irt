@@ -291,7 +291,7 @@ class Text(defaultdict):
     # fmt: off
     @property
     def description(self):
-        s = "IRT Text ({self.mode}))\n"
+        s = f"IRT Text ({self.mode})\n"
 
         stats = (
             "mean contexts: {mean_contexts:.2f}\n"
