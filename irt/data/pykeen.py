@@ -125,6 +125,9 @@ class KeenClosedWorld(Keen):
     of the IRT Dataset is partitioned randomly into training,
     validation, and optionally testing.
 
+    Entities must have consecutive ids assigned. Each Keen dataset
+    comes with self.irt2keen : dict[int, int] which maps the ids.
+
     """
 
     seed: int

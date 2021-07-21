@@ -2,6 +2,25 @@
 
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
+<!-- markdown-toc start - Don't edit this section. Run M-x markdown-toc-refresh-toc -->
+**Table of Contents**
+
+- [Inductive Reasoning with Text (IRT)](#inductive-reasoning-with-text-irt)
+    - [Download](#download)
+    - [Installation](#installation)
+    - [Data Organisation](#data-organisation)
+    - [Loading](#loading)
+    - [Data Formats](#data-formats)
+        - [Graph Data](#graph-data)
+        - [Split Data](#split-data)
+        - [Text Data](#text-data)
+    - [PyKeen Dataset](#pykeen-dataset)
+    - [Pytorch Dataset](#pytorch-dataset)
+    - [Bring Your Own Data](#bring-your-own-data)
+
+<!-- markdown-toc end -->
+
+
 This code is used to create benchmark datasets as described in
 [Open-World Knowledge Graph Completion Benchmarks for Knowledge
 Discovery](#) from a given knowledge graph (i.e. triple set) and
@@ -9,6 +28,11 @@ supplementary text. The two KG's evaluated in the paper (based on
 [FB15k237](https://www.microsoft.com/en-us/download/details.aspx?id=52312)
 and [CoDEx](https://github.com/tsafavi/codex)) are available for
 download [below](#Download).
+
+
+## Download
+
+TBA
 
 
 ## Installation
@@ -35,41 +59,103 @@ data. Each entity of the kg is assigned a set of textual description
 of mentions.
 
 
-## Download
-
-TBA
-
-
 ## Loading
 
-TODO describe `.load`-Interface for the IRT dataset.
+Simply provide a path to an IRT dataset folder.
+
+``` python
+from irt import Dataset
+dataset = Dataset('path/to/irt-fb')
+print(dataset.description)
+```
+
+```
+IRT DATASET
+
+IRT GRAPH: irt-fb
+  nodes: 14541
+  edges: 310116 (237 types)
+  degree:
+    mean 42.65
+    median 26
+
+IRT SPLIT
+2389 retained concepts
+
+Config:
+  seed: 26041992
+  ow split: 0.7
+  ow train split: 0.5
+  relation threshold: 100
+  git: 66fe7bd3c934311bdc3b1aa380b7c6c45fd7cd93
+  date: 2021-07-21 17:29:04.339909
+
+Closed World - TRAIN:
+  owe: 12164
+  entities: 12164
+  heads: 11562
+  tails: 11252
+  triples: 238190
+
+Open World - VALID:
+  owe: 1558
+  entities: 9030
+  heads: 6907
+  tails: 6987
+  triples: 46503
+
+Open World - TEST:
+  owe: 819
+  entities: 6904
+  heads: 4904
+  tails: 5127
+  triples: 25423
+
+IRT Text (Mode.CLEAN)
+  mean contexts: 28.92
+  median contexts: 30.00
+  mean mentions: 2.84
+  median mentions: 2.00
+```
 
 
 ## Data Formats
 
-TODO
+The data in the respective provided dataset folders should be quite
+self-explanatory. Each entity and each relation is assigned a unique
+integer id (denoted `e` [entity], `h` [head], `t` [tail], and `r`
+[relation]). There is folder containing the full graph data
+(`graph/`), a folder containing the open-world/closed-world splits
+(`split/`) and the textual data (`text/`).
 
 ### Graph Data
 
-TODO describe file formats
-
-
-### Split Data
-
-TODO describe file formats
-
+This concerns both data in `graph/` and `split/`. Entity and relation
+identifier can be translated with the `graph/entities.txt` and
+`graph/relations.txt` respectively. Triple sets come in `h t r` order.
 
 ### Text Data
 
-TODO describe file formats
+The upstream system that sampled our texts:
+[ecc](https://github.com/TobiasUhmann/entity-context-crawler). All
+text comes gzipped and can be opened using the built-in python
+`gzip` library. For inspection, you can use the `zcat`, `zless`,
+`zgrep`, etc. (at least on unixoid systems ;) ).
 
 
 ## PyKeen Dataset
 
+For users of [pykeen](https://github.com/pykeen/pykeen).
+
+``` python
 TODO
+```
 
 
 ## Pytorch Dataset
+
+For users of [pytorch](https://pytorch.org/)
+and/or [pytorch-lightning](https://www.pytorchlightning.ai/).
 
 We offer a `torch.utils.data.Dataset`, a `torch.utils.data.DataLoader`
 and a `pytorch_lightning.DataModule`. The Dataset abstracts what a
