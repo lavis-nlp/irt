@@ -8,11 +8,9 @@
 - [Inductive Reasoning with Text (IRT)](#inductive-reasoning-with-text-irt)
     - [Download](#download)
     - [Installation](#installation)
-    - [Data Organisation](#data-organisation)
     - [Loading](#loading)
     - [Data Formats](#data-formats)
         - [Graph Data](#graph-data)
-        - [Split Data](#split-data)
         - [Text Data](#text-data)
     - [PyKeen Dataset](#pykeen-dataset)
     - [Pytorch Dataset](#pytorch-dataset)
@@ -32,6 +30,16 @@ download [below](#Download).
 
 ## Download
 
+We offer two IRT reference datasets: The first - **IRT-FB** - is based
+on
+[FB15k237](https://www.microsoft.com/en-us/download/details.aspx?id=52312)
+and the second - **IRT-CDE** - utilizes
+[CoDEx](https://github.com/tsafavi/codex). Each dataset offers
+knowledge graph triples for the *closed world (cw)* and *open world
+(ow)* split. The ow-split is partitioned into validation and test
+data. Each entity of the KG is assigned a set of text contexts of
+mentions of that entity.
+
 TBA
 
 
@@ -44,19 +52,6 @@ Python 3.9 is required. We recommend [conda](https://docs.conda.io/en/latest/min
 conda create -n irt python=3.9
 pip install -r requirements.txt
 ```
-
-
-## Data Organisation
-
-We offer two IRT reference datasets: The first - **IRT-FB** - is
-baed on
-[FB15k237](https://www.microsoft.com/en-us/download/details.aspx?id=52312)
-and the second - **IRT-CDE** - utilizes
-[CoDEx](https://github.com/tsafavi/codex). Each dataset offers
-knowledge graph triples for the *closed world (cw)* and *open world
-(ow)* split. The ow-split is partitioned into validation and test
-data. Each entity of the kg is assigned a set of textual description
-of mentions.
 
 
 ## Loading
@@ -132,15 +127,23 @@ integer id (denoted `e` [entity], `h` [head], `t` [tail], and `r`
 
 This concerns both data in `graph/` and `split/`. Entity and relation
 identifier can be translated with the `graph/entities.txt` and
-`graph/relations.txt` respectively. Triple sets come in `h t r` order.
+`graph/relations.txt` respectively. Triple sets come in `h t r`
+order. Reference code to load graph data:
+
+* `irt.graph.Graph.load`
+* `irt.data.dataset.Split.load`
+
 
 ### Text Data
 
 The upstream system that sampled our texts:
 [ecc](https://github.com/TobiasUhmann/entity-context-crawler). All
-text comes gzipped and can be opened using the built-in python
-`gzip` library. For inspection, you can use the `zcat`, `zless`,
-`zgrep`, etc. (at least on unixoid systems ;) ).
+text comes gzipped and can be opened using the built-in python `gzip`
+library. For inspection, you can use the `zcat`, `zless`, `zgrep`,
+etc. (at least on unixoid systems ;)) - or extract them using
+`unzip`. Reference code to load text data:
+
+* `irt.data.dataset.Text.load`
 
 
 ## PyKeen Dataset
@@ -158,7 +161,7 @@ For users of [pytorch](https://pytorch.org/)
 and/or [pytorch-lightning](https://www.pytorchlightning.ai/).
 
 We offer a `torch.utils.data.Dataset`, a `torch.utils.data.DataLoader`
-and a `pytorch_lightning.DataModule`. The Dataset abstracts what a
+and a `pytorch_lightning.DataModule`. The dataset abstracts what a
 "sample" is and how to collate samples to batches:
 
 
@@ -187,12 +190,10 @@ batch[1].shape  # -> 60, 105
 ```
 
 
-
-
-
 ## Bring Your Own Data
 
-If you want to utilize this code to create your own *ow/cw*-split, you
-need to either bring your data in a format readable by the existing
-code base or extend this code for your own data model. See
-[ipynb/graph.split.ipynb](#) for a step-by-step guide.
+If you want to utilize this code to create your own
+open-world/closed-world-split, you need to either bring your data in a
+format readable by the existing code base or extend this code for your
+own data model. See [ipynb/graph.split.ipynb](ipynb/graph.split.ipynb)
+for a step-by-step guide.
