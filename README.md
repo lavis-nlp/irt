@@ -15,6 +15,7 @@
     - [PyKeen Dataset](#pykeen-dataset)
     - [Pytorch Dataset](#pytorch-dataset)
     - [Bring Your Own Data](#bring-your-own-data)
+    - [Citation](#citation)
 
 <!-- markdown-toc end -->
 
@@ -40,12 +41,34 @@ knowledge graph triples for the *closed world (cw)* and *open world
 data. Each entity of the KG is assigned a set of text contexts of
 mentions of that entity.
 
-TBA
+| Name        | Description       | Download |
+|:------------|:------------------|:---------|
+| **IRT-CDE** | Based on CoDEx    |          |
+| **IRT-FB**  | Based on FB15k237 |          |
+
+**Legacy Data**
+
+This data is used as upstream source or was used in the original
+experiments for [the paper](#). They are left here for documentation
+and to allow for reproduction of the original results. You need to go
+back to this
+[commit](https://github.com/lavis-nlp/irtm/tree/157df680f9ee604b43a13581ab7de45d40ac81d6)
+in irtm to use the data for model training.
+
+
+| Name                   | Description                                                                                        | Download                                                                |
+|:-----------------------|:---------------------------------------------------------------------------------------------------|:------------------------------------------------------------------------|
+| **fb-contexts-v7**     | Original dataset with our text sampling used in the paper (all modes, all context sizes)           | [Link](http://lavis.cs.hs-rm.de/storage/irt/fb.legacy.contexts-v7.tgz)  |
+| **fb-owe**             | Original dataset with Wikidata descriptions provided by [shah/OWE](https://github.com/haseebs/OWE) | [Link](http://lavis.cs.hs-rm.de/storage/irt/fb.legacy.owe.tgz)          |
+| **fb-db-contexts-v7**  | FB15k aligned text sampled by [ecc](https://github.com/TobiasUhmann/entity-context-crawler)        | [Link](http://lavis.cs.hs-rm.de/storage/irt/fb.src.contexts-db.tgz)     |
+| **cde-contexts-v7**    | Original dataset with our text sampling used in the paper (all modes, all contexts sizes)          | [Link](http://lavis.cs.hs-rm.de/storage/irt/cde.legacy.contexts-v7.tgz) |
+| **cde-codex.en**       | Dataset with texts provided by [tsafavi/codex](https://github.com/tsafavi/codex)                   | [Link](http://lavis.cs.hs-rm.de/storage/irt/cde.legacy.codex-en.tgz)    |
+| **cde-db-contexts-v7** | CoDEx aligned text sampled by [ecc](https://github.com/TobiasUhmann/entity-context-crawler)        | [Link](http://lavis.cs.hs-rm.de/storage/irt/cde.src.contexts-db.tgz)    |
 
 
 ## Installation
 
-Python 3.9 is required. We recommend [conda](https://docs.conda.io/en/latest/miniconda.html) for managing Python environments.
+Python 3.9 is required. We recommend [miniconda](https://docs.conda.io/en/latest/miniconda.html) for managing Python environments.
 
 
 ``` bash
@@ -189,6 +212,10 @@ len(batch[0])   # -> 60
 batch[1].shape  # -> 60, 105
 ```
 
+Note: Only the first invocation is slow, because the tokenizer needs
+to run. The tokenized text is saved to the IRT folder under `torch/`
+and re-used from then on.
+
 
 ## Bring Your Own Data
 
@@ -197,3 +224,13 @@ open-world/closed-world-split, you need to either bring your data in a
 format readable by the existing code base or extend this code for your
 own data model. See [ipynb/graph.split.ipynb](ipynb/graph.split.ipynb)
 for a step-by-step guide.
+
+
+## Citation
+
+If this is useful to you, please consider a citation:
+
+
+```
+coming soon
+```
