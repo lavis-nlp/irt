@@ -2,7 +2,7 @@ from distutils.core import setup
 
 setup(
     name="irt-data",
-    version="1.0-rc.3",
+    version="1.1",
     packages=[
         "irt",
         "irt.data",
@@ -14,6 +14,8 @@ setup(
     author="Felix Hamann",
     author_email="felix@hamann.xyz",
     description="Inductive Reasoning with Text - Benchmarks",
+    long_description=open("README.md").read(),
+    long_description_content_type="text/markdown",
     install_requires=[
         "pyyaml==5.*",
         "networkx==2.*",
