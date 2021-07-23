@@ -42,10 +42,10 @@ knowledge graph triples for the *closed world (cw)* and *open world
 data. Each entity of the KG is assigned a set of text contexts of
 mentions of that entity.
 
-| Name        | Description       | Download |
-|:------------|:------------------|:---------|
-| **IRT-CDE** | Based on CoDEx    |          |
-| **IRT-FB**  | Based on FB15k237 |          |
+| Name        | Description       | Download                                             |
+|:------------|:------------------|:-----------------------------------------------------|
+| **IRT-CDE** | Based on CoDEx    | [Link](http://lavis.cs.hs-rm.de/storage/irt/cde.tgz) |
+| **IRT-FB**  | Based on FB15k237 | [Link](http://lavis.cs.hs-rm.de/storage/irt/fb.tgz)  |
 
 **Legacy Data**
 
@@ -57,14 +57,14 @@ back to this
 in irtm to use the data for model training.
 
 
-| Name                   | Description                                                                                        | Download                                                                |
-|:-----------------------|:---------------------------------------------------------------------------------------------------|:------------------------------------------------------------------------|
-| **fb-contexts-v7**     | Original dataset with our text sampling used in the paper (all modes, all context sizes)           | [Link](http://lavis.cs.hs-rm.de/storage/irt/fb.legacy.contexts-v7.tgz)  |
-| **fb-owe**             | Original dataset with Wikidata descriptions provided by [shah/OWE](https://github.com/haseebs/OWE) | [Link](http://lavis.cs.hs-rm.de/storage/irt/fb.legacy.owe.tgz)          |
-| **fb-db-contexts-v7**  | FB15k aligned text sampled by [ecc](https://github.com/TobiasUhmann/entity-context-crawler)        | [Link](http://lavis.cs.hs-rm.de/storage/irt/fb.src.contexts-db.tgz)     |
-| **cde-contexts-v7**    | Original dataset with our text sampling used in the paper (all modes, all contexts sizes)          | [Link](http://lavis.cs.hs-rm.de/storage/irt/cde.legacy.contexts-v7.tgz) |
-| **cde-codex.en**       | Dataset with texts provided by [tsafavi/codex](https://github.com/tsafavi/codex)                   | [Link](http://lavis.cs.hs-rm.de/storage/irt/cde.legacy.codex-en.tgz)    |
-| **cde-db-contexts-v7** | CoDEx aligned text sampled by [ecc](https://github.com/TobiasUhmann/entity-context-crawler)        | [Link](http://lavis.cs.hs-rm.de/storage/irt/cde.src.contexts-db.tgz)    |
+| Name                   | Description                                                                                     | Download                                                                |
+|:-----------------------|:------------------------------------------------------------------------------------------------|:------------------------------------------------------------------------|
+| **fb-contexts-v7**     | Original dataset (our text) as used in the paper (all modes, all context sizes)                 | [Link](http://lavis.cs.hs-rm.de/storage/irt/fb.legacy.contexts-v7.tgz)  |
+| **fb-owe**             | Original dataset (Wikidata descriptions provided by [shah/OWE](https://github.com/haseebs/OWE)) | [Link](http://lavis.cs.hs-rm.de/storage/irt/fb.legacy.owe.tgz)          |
+| **fb-db-contexts-v7**  | Our text sampled by [ecc](https://github.com/TobiasUhmann/entity-context-crawler) for FB        | [Link](http://lavis.cs.hs-rm.de/storage/irt/fb.src.contexts-db.tgz)     |
+| **cde-contexts-v7**    | Original dataset (our text) as used in the paper (all modes, all contexts sizes)                | [Link](http://lavis.cs.hs-rm.de/storage/irt/cde.legacy.contexts-v7.tgz) |
+| **cde-codex.en**       | Original dataset (Texts provided by [tsafavi/codex](https://github.com/tsafavi/codex))          | [Link](http://lavis.cs.hs-rm.de/storage/irt/cde.legacy.codex-en.tgz)    |
+| **cde-db-contexts-v7** | Our text sampled by [ecc](https://github.com/TobiasUhmann/entity-context-crawler) for CDE       | [Link](http://lavis.cs.hs-rm.de/storage/irt/cde.src.contexts-db.tgz)    |
 
 
 ## Installation
