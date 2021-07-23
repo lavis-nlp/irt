@@ -74,6 +74,7 @@ Python 3.9 is required. We recommend [miniconda](https://docs.conda.io/en/latest
 
 ``` bash
 conda create -n irt python=3.9
+conda activate irt
 pip install irt-data
 ```
 

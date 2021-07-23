@@ -2,8 +2,14 @@ from distutils.core import setup
 
 setup(
     name="irt-data",
-    version="1.0-rc.2",
-    packages=["irt"],
+    version="1.0-rc.3",
+    packages=[
+        "irt",
+        "irt.data",
+        "irt.graph",
+        "irt.text",
+        "irt.common",
+    ],
     license="MIT",
     author="Felix Hamann",
     author_email="felix@hamann.xyz",
