@@ -182,7 +182,8 @@ For users of [pykeen](https://github.com/pykeen/pykeen). There are two
 offer pykeen TriplesFactories with an id-mapping to the IRT
 entity-ids.
 
-### Closed-world PyKeen dataset
+**Closed-World:**
+
 
 ``` python
 from irt import Dataset
@@ -192,10 +193,64 @@ dataset = Dataset('path/to/dataset')
 
 # 'split' is either a single float, a tuple (for an additional
 # test split) or a triple which must sum to 1
-kcw = KeenClosedWorld(dataset=dataset, split=.7, seed=1234)
+kcw = KeenClosedWorld(dataset=dataset, split=.8, seed=1234)
 
 print(kcw.description)
 ```
+
+```
+IRT PYKEEN DATASET
+irt-cde
+
+  training triples factory:
+    entities: 12091
+    relations: 51
+    triples: 109910
+
+  validation triples factory:
+    entities: 12091
+    relations: 51
+    triples: 27478
+```
+
+It offers `.training`, `.validation`, and `.testing` TriplesFactories,
+and `irt2keen`/`keen2irt` id-mappings.
+
+
+**Open-World:**
+
+``` python
+from irt import Dataset
+from irt import KeenClosedWorld
+
+dataset = Dataset('path/to/dataset')
+kow = KeenOpenWorld(dataset=ds)
+
+print(kow.description)
+```
+
+```
+IRT PYKEEN DATASET
+irt-cde
+
+  closed world triples factory:
+    entities: 12091
+    relations: 51
+    triples: 137388
+
+  open world validation triples factory:
+    entities: 15101
+    relations: 46
+    triples: 41240
+
+  open world testing triples factory:
+    entities: 17050
+    relations: 48
+    triples: 27577
+```
+
+It offers `.closed_world`, `.open_world_valid`, and `.open_world_test`
+TriplesFactories, and `irt2keen`/`keen2irt` id-mappings.
 
 
 ## Pytorch Dataset
