@@ -1,6 +1,7 @@
 # Inductive Reasoning with Text (IRT)
 
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+[![PyPI version](https://badge.fury.io/py/irt-data.svg)](https://badge.fury.io/py/irt-data)
 
 <!-- markdown-toc start - Don't edit this section. Run M-x markdown-toc-refresh-toc -->
 **Table of Contents**
