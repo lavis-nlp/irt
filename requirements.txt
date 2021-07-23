@@ -1,19 +1,5 @@
-tqdm
-pyyaml
-networkx
-gitpython
-
-# notes
-jupyter
-tabulate
-matplotlib
-
-# dev
 ipdb
 black
 flake8
 autopep8
 ipython
-
-# self
--e .
