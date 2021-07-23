@@ -74,13 +74,18 @@ Python 3.9 is required. We recommend [miniconda](https://docs.conda.io/en/latest
 
 ``` bash
 conda create -n irt python=3.9
-pip install -r requirements.txt
+pip install irt-data
 ```
+
+The `requirements.txt` contains additional packages used for development.
 
 
 ## Loading
 
-Simply provide a path to an IRT dataset folder.
+Simply provide a path to an IRT dataset folder. The data is loaded
+lazily - that is why the construction is fast, but the first invocation
+of `.description` takes a while.
+
 
 ``` python
 from irt import Dataset
@@ -172,10 +177,24 @@ etc. (at least on unixoid systems ;)) - or extract them using
 
 ## PyKeen Dataset
 
-For users of [pykeen](https://github.com/pykeen/pykeen).
+For users of [pykeen](https://github.com/pykeen/pykeen). There are two
+"views" on the triple sets: closed-world and open-world. Both simply
+offer pykeen TriplesFactories with an id-mapping to the IRT
+entity-ids.
+
+### Closed-world PyKeen dataset
 
 ``` python
-TODO
+from irt import Dataset
+from irt import KeenClosedWorld
+
+dataset = Dataset('path/to/dataset')
+
+# 'split' is either a single float, a tuple (for an additional
+# test split) or a triple which must sum to 1
+kcw = KeenClosedWorld(dataset=dataset, split=.7, seed=1234)
+
+print(kcw.description)
 ```
 
 

@@ -70,7 +70,7 @@ class Keen(ABC):
         s = "IRT PYKEEN DATASET\n"
         s += f"{self.dataset.name}\n"
 
-        for name, factory in self.factories.items():
+        for name, factory in self.factories:
             content = textwrap.indent(
                 f"entities: {factory.num_entities}\n"
                 f"relations: {factory.num_relations}\n"
