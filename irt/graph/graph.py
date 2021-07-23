@@ -22,16 +22,13 @@ from dataclasses import dataclass
 from dataclasses import FrozenInstanceError
 from collections import defaultdict
 
-from typing import Set
-from typing import Dict
-from typing import Tuple
 from typing import Union
 from typing import NewType
 from typing import Iterable
 
 
 log = logging.getLogger(__name__)
-Triple = NewType("Triple", Tuple[int, int, int])
+Triple = NewType("Triple", tuple[int, int, int])
 
 
 # ----------| DATA
@@ -83,10 +80,10 @@ class GraphImport:
     """
 
     # (head, tail, relation)
-    triples: Set[Triple]
+    triples: set[Triple]
 
-    rels: Dict[int, str] = field(default_factory=dict)
-    ents: Dict[int, str] = field(default_factory=dict)
+    rels: dict[int, str] = field(default_factory=dict)
+    ents: dict[int, str] = field(default_factory=dict)
 
     # --
 
@@ -98,7 +95,7 @@ class GraphImport:
         self._set("ents", frozendict(ents))
         self._set("rels", frozendict(rels))
 
-    def _resolve(self, idx: int, mapping: Dict[int, str]):
+    def _resolve(self, idx: int, mapping: dict[int, str]):
         if idx not in mapping:
             label = str(idx)
             mapping[idx] = label
@@ -215,7 +212,7 @@ class Graph:
         return self._rnx
 
     @property
-    def edges(self) -> Dict[int, Triple]:
+    def edges(self) -> dict[int, Triple]:
         return self._edges
 
     @property
@@ -272,9 +269,9 @@ class Graph:
 
     def select(
         self,
-        heads: Set[int] = None,
-        tails: Set[int] = None,
-        edges: Set[int] = None,
+        heads: set[int] = None,
+        tails: set[int] = None,
+        edges: set[int] = None,
     ):
         """
 
@@ -344,12 +341,12 @@ class Graph:
 
     def find(
         self,
-        heads: Set[int] = None,
-        tails: Set[int] = None,
-        edges: Set[int] = None,
-    ) -> Set[Triple]:
+        heads: set[int] = None,
+        tails: set[int] = None,
+        edges: set[int] = None,
+    ) -> set[Triple]:
         """
-        Find edges from the graph.
+        Find edges in the graph.
 
         An edge is a triple (h, t, r) and the selection is either
         the union or intersection of all edges containing one of the

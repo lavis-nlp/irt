@@ -29,8 +29,6 @@ from functools import partial
 from functools import lru_cache
 from collections import defaultdict
 
-from typing import List
-from typing import Tuple
 from typing import Union
 from typing import Optional
 
@@ -92,7 +90,7 @@ class TorchDataset(td.Dataset):
     def __len__(self):
         return len(self._flat)
 
-    def __getitem__(self, idx: int) -> Tuple[int, List[int]]:
+    def __getitem__(self, idx: int) -> tuple[int, list[int]]:
         return self._flat[idx]
 
     def _tokenize(self, part):
@@ -178,7 +176,7 @@ class TorchDataset(td.Dataset):
         )
 
     @staticmethod
-    def collate_fn(batch: List[Tuple[int, torch.Tensor]]) -> Tuple[torch.Tensor]:
+    def collate_fn(batch: list[tuple[int, torch.Tensor]]) -> tuple[torch.Tensor]:
 
         # flatten entities to match context counts
         ents = tuple(ent for ent, ctx in batch for _ in ctx)

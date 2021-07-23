@@ -21,9 +21,6 @@ from functools import lru_cache
 import torch
 from pykeen.triples import TriplesFactory
 
-from typing import List
-from typing import Dict
-from typing import Tuple
 from typing import Union
 from typing import Optional
 from typing import Sequence
@@ -44,18 +41,18 @@ class Keen(ABC):
     """
 
     dataset: dataset.Dataset
-    irt2keen: Dict[int, int]
+    irt2keen: dict[int, int]
 
     # ---
 
     @property
     @abstractmethod
-    def factories(self) -> List[Tuple[str, TriplesFactory]]:
+    def factories(self) -> list[tuple[str, TriplesFactory]]:
         raise NotImplementedError()
 
     @property
     @lru_cache
-    def keen2irt(self) -> Dict[int, int]:
+    def keen2irt(self) -> dict[int, int]:
         return {v: k for k, v in self.irt2keen.items()}
 
     def __str__(self) -> str:
@@ -98,7 +95,7 @@ def remap(*entities):
     return idmap
 
 
-def triples2factory(triples: Collection[Sequence[int]], idmap: Dict[int, int]):
+def triples2factory(triples: Collection[Sequence[int]], idmap: dict[int, int]):
     """
 
     Convert htr triples to a pykeen triples factory

@@ -17,9 +17,6 @@ from dataclasses import dataclass
 from itertools import combinations
 from collections import defaultdict
 
-from typing import Set
-from typing import Dict
-from typing import Tuple
 from typing import Union
 from typing import Callable
 
@@ -39,8 +36,8 @@ log = logging.getLogger(__name__)
 class Part:
 
     name: str
-    owe: Set[int]  # open world entities
-    triples: Set[Tuple[int]]
+    owe: set[int]  # open world entities
+    triples: set[tuple[int]]
 
     @property
     @lru_cache
@@ -54,7 +51,7 @@ class Part:
 
     @property
     @lru_cache
-    def heads(self) -> Set[int]:
+    def heads(self) -> set[int]:
         if not self.triples:
             return set()
 
@@ -62,7 +59,7 @@ class Part:
 
     @property
     @lru_cache
-    def tails(self) -> Set[int]:
+    def tails(self) -> set[int]:
         if not self.triples:
             return set()
 
@@ -94,12 +91,12 @@ class Part:
 @dataclass
 class Split:
     """
-    Container class for a split dataset
+    Container class for a ow/cw triple splits
 
     """
 
     cfg: graph_split.Config
-    concepts: Set[int]
+    concepts: set[int]
 
     closed_world: Part
     open_world_valid: Part
@@ -273,7 +270,7 @@ class Text(defaultdict):
         return fmt.format(**self.stats)
 
     @property
-    def stats(self) -> Dict[str, float]:
+    def stats(self) -> dict[str, float]:
         contexts, mentions = zip(
             *[
                 (len(samples), len({sample.mention for sample in samples}))
@@ -339,7 +336,9 @@ class Dataset:
 
     IRT Dataset
 
-    TODO: documentation
+    Load an IRT dataset from a given folder. This container class
+    maintains the full graph (based on networkx), the ow/cw
+    triple-splits, and the text associated with entities.
 
     """
 
@@ -356,11 +355,11 @@ class Dataset:
         return self.split.cfg
 
     @property
-    def id2ent(self) -> Dict[int, str]:
+    def id2ent(self) -> dict[int, str]:
         return self.graph.source.ents
 
     @property
-    def id2rel(self) -> Dict[int, str]:
+    def id2rel(self) -> dict[int, str]:
         return self.graph.source.rels
 
     # ---

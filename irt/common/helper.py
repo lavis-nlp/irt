@@ -10,6 +10,7 @@ import random
 import pathlib
 
 from typing import Union
+from typing import Optional
 
 
 log = logging.getLogger(__name__)
@@ -17,10 +18,10 @@ log = logging.getLogger(__name__)
 
 def path(
     name: Union[str, pathlib.Path],
-    create: bool = False,
-    exists: bool = False,
-    is_file: bool = False,
-    message: str = None,
+    create: Optional[bool] = False,
+    exists: Optional[bool] = False,
+    is_file: Optional[bool] = False,
+    message: Optional[str] = None,
 ) -> pathlib.Path:
     """
 
@@ -46,7 +47,6 @@ def path(
 
 
     """
-    # TODO describe message (see kgc.config)
     path = pathlib.Path(name)
 
     if (exists or is_file) and not path.exists():
