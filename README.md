@@ -16,6 +16,7 @@
     - [PyKeen Dataset](#pykeen-dataset)
     - [Pytorch Dataset](#pytorch-dataset)
     - [Bring Your Own Data](#bring-your-own-data)
+    - [Legacy Data](#legacy-data)
     - [Citation](#citation)
 
 <!-- markdown-toc end -->
@@ -47,29 +48,12 @@ mentions of that entity.
 | **IRT-CDE** | Based on CoDEx    | [Link](http://lavis.cs.hs-rm.de/storage/irt/cde.tgz) |
 | **IRT-FB**  | Based on FB15k237 | [Link](http://lavis.cs.hs-rm.de/storage/irt/fb.tgz)  |
 
-**Legacy Data**
-
-This data is used as upstream source or was used in the original
-experiments for [the paper](#). They are left here for documentation
-and to allow for reproduction of the original results. You need to go
-back to this
-[commit](https://github.com/lavis-nlp/irtm/tree/157df680f9ee604b43a13581ab7de45d40ac81d6)
-in irtm to use the data for model training.
-
-
-| Name                   | Description                                                                                     | Download                                                                |
-|:-----------------------|:------------------------------------------------------------------------------------------------|:------------------------------------------------------------------------|
-| **fb-contexts-v7**     | Original dataset (our text) as used in the paper (all modes, all context sizes)                 | [Link](http://lavis.cs.hs-rm.de/storage/irt/fb.legacy.contexts-v7.tgz)  |
-| **fb-owe**             | Original dataset (Wikidata descriptions provided by [shah/OWE](https://github.com/haseebs/OWE)) | [Link](http://lavis.cs.hs-rm.de/storage/irt/fb.legacy.owe.tgz)          |
-| **fb-db-contexts-v7**  | Our text sampled by [ecc](https://github.com/TobiasUhmann/entity-context-crawler) for FB        | [Link](http://lavis.cs.hs-rm.de/storage/irt/fb.src.contexts-db.tgz)     |
-| **cde-contexts-v7**    | Original dataset (our text) as used in the paper (all modes, all contexts sizes)                | [Link](http://lavis.cs.hs-rm.de/storage/irt/cde.legacy.contexts-v7.tgz) |
-| **cde-codex.en**       | Original dataset (Texts provided by [tsafavi/codex](https://github.com/tsafavi/codex))          | [Link](http://lavis.cs.hs-rm.de/storage/irt/cde.legacy.codex-en.tgz)    |
-| **cde-db-contexts-v7** | Our text sampled by [ecc](https://github.com/TobiasUhmann/entity-context-crawler) for CDE       | [Link](http://lavis.cs.hs-rm.de/storage/irt/cde.src.contexts-db.tgz)    |
-
 
 ## Installation
 
-Python 3.9 is required. We recommend [miniconda](https://docs.conda.io/en/latest/miniconda.html) for managing Python environments.
+Python 3.9 is required. We recommend
+[miniconda](https://docs.conda.io/en/latest/miniconda.html) for
+managing Python environments.
 
 
 ``` bash
@@ -300,6 +284,26 @@ open-world/closed-world-split, you need to either bring your data in a
 format readable by the existing code base or extend this code for your
 own data model. See [ipynb/graph.split.ipynb](ipynb/graph.split.ipynb)
 for a step-by-step guide.
+
+
+## Legacy Data
+
+This data is used as upstream source or was used in the original
+experiments for [the paper](#). They are left here for documentation
+and to allow for reproduction of the original results. You need to go
+back to this
+[commit](https://github.com/lavis-nlp/irtm/tree/157df680f9ee604b43a13581ab7de45d40ac81d6)
+in irtm to use the data for model training.
+
+
+| Name                   | Description                                                                                     | Download                                                                |
+|:-----------------------|:------------------------------------------------------------------------------------------------|:------------------------------------------------------------------------|
+| **fb-contexts-v7**     | Original dataset (our text) as used in the paper (all modes, all context sizes)                 | [Link](http://lavis.cs.hs-rm.de/storage/irt/fb.legacy.contexts-v7.tgz)  |
+| **fb-owe**             | Original dataset (Wikidata descriptions provided by [shah/OWE](https://github.com/haseebs/OWE)) | [Link](http://lavis.cs.hs-rm.de/storage/irt/fb.legacy.owe.tgz)          |
+| **fb-db-contexts-v7**  | Our text sampled by [ecc](https://github.com/TobiasUhmann/entity-context-crawler) for FB        | [Link](http://lavis.cs.hs-rm.de/storage/irt/fb.src.contexts-db.tgz)     |
+| **cde-contexts-v7**    | Original dataset (our text) as used in the paper (all modes, all contexts sizes)                | [Link](http://lavis.cs.hs-rm.de/storage/irt/cde.legacy.contexts-v7.tgz) |
+| **cde-codex.en**       | Original dataset (Texts provided by [tsafavi/codex](https://github.com/tsafavi/codex))          | [Link](http://lavis.cs.hs-rm.de/storage/irt/cde.legacy.codex-en.tgz)    |
+| **cde-db-contexts-v7** | Our text sampled by [ecc](https://github.com/TobiasUhmann/entity-context-crawler) for CDE       | [Link](http://lavis.cs.hs-rm.de/storage/irt/cde.src.contexts-db.tgz)    |
 
 
 ## Citation
