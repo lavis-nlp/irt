@@ -2,7 +2,7 @@ from distutils.core import setup
 
 setup(
     name="irt-data",
-    version="1.1",
+    version="1.2",
     packages=[
         "irt",
         "irt.data",
