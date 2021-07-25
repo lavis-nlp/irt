@@ -519,7 +519,7 @@ class Splitter:
         retained = self.g.select(heads=concepts, tails=concepts)
         agg = retained.copy()
 
-        cw = set()
+        cw = retained
         ow_valid = set()
         ow_test = set()
 
@@ -549,6 +549,7 @@ class Splitter:
         # ---
 
         assert len(agg) == len(self.g.source.triples)
+        assert len(cw | ow_valid | ow_test) == len(self.g.source.triples)
         log.info(f"split {len(cw)=} and " f"{len((ow_valid|ow_test))=} triples")
 
         # ---
