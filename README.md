@@ -13,7 +13,7 @@
     - [Data Formats](#data-formats)
         - [Graph Data](#graph-data)
         - [Text Data](#text-data)
-    - [PyKeen Dataset](#pykeen-dataset)
+    - [PyKEEN Dataset](#pykeen-dataset)
     - [Pytorch Dataset](#pytorch-dataset)
     - [Bring Your Own Data](#bring-your-own-data)
     - [Legacy Data](#legacy-data)
@@ -160,7 +160,7 @@ etc. (at least on unixoid systems ;)) - or extract them using
 * `irt.data.dataset.Text.load`
 
 
-## PyKeen Dataset
+## PyKEEN Dataset
 
 For users of [pykeen](https://github.com/pykeen/pykeen). There are two
 "views" on the triple sets: closed-world and open-world. Both simply
