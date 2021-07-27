@@ -24,7 +24,7 @@
 
 This code is used to create benchmark datasets as described in
 [Open-World Knowledge Graph Completion Benchmarks for Knowledge
-Discovery](#) from a given knowledge graph (i.e. triple set) and
+Discovery](https://doi.org/10.1007/978-3-030-79463-7_21) from a given knowledge graph (i.e. triple set) and
 supplementary text. The two KG's evaluated in the paper (based on
 [FB15k237](https://www.microsoft.com/en-us/download/details.aspx?id=52312)
 and [CoDEx](https://github.com/tsafavi/codex)) are available for
@@ -310,7 +310,13 @@ in irtm to use the data for model training.
 
 If this is useful to you, please consider a citation:
 
-
 ```
-coming soon
+@inproceedings{hamann2021open,
+  title={Open-World Knowledge Graph Completion Benchmarks for Knowledge Discovery},
+  author={Hamann, Felix and Ulges, Adrian and Krechel, Dirk and Bergmann, Ralph},
+  booktitle={International Conference on Industrial, Engineering and Other Applications of Applied Intelligent Systems},
+  pages={252--264},
+  year={2021},
+  organization={Springer}
+}
 ```
