@@ -43,10 +43,10 @@ knowledge graph triples for the *closed world (cw)* and *open world
 data. Each entity of the KG is assigned a set of text contexts of
 mentions of that entity.
 
-| Name        | Description       | Download                                             |
-|:------------|:------------------|:-----------------------------------------------------|
-| **IRT-CDE** | Based on CoDEx    | [Link](http://lavis.cs.hs-rm.de/storage/irt/cde.tgz) |
-| **IRT-FB**  | Based on FB15k237 | [Link](http://lavis.cs.hs-rm.de/storage/irt/fb.tgz)  |
+| Name        | Description       | Download                               |
+|:------------|:------------------|:---------------------------------------|
+| **IRT-CDE** | Based on CoDEx    | [Link](https://bit.ly/2TE62wf-IRT-CDE) |
+| **IRT-FB**  | Based on FB15k237 | [Link](https://bit.ly/376WJIh-IRT-FB)  |
 
 
 ## Installation
